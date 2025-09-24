@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Dashboard - Bookings</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .sidebar {
+            background-color: var(--primary);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            padding-top: 20px;
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 12px 20px;
+            margin: 4px 0;
+            border-radius: 4px;
+        }
+        
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        .dashboard-card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+            height: 100%;
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card {
+            background: white;
+            border-left: 4px solid var(--secondary);
+        }
+        
+        .stat-card.today {
+            border-left-color: var(--success);
+        }
+        
+        .stat-card.month {
+            border-left-color: var(--warning);
+        }
+        
+        .stat-card.pending {
+            border-left-color: var(--danger);
+        }
+        
+        .card-icon {
+            font-size: 2.5rem;
+            opacity: 0.2;
+            position: absolute;
+            right: 20px;
+            top: 20px;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .navbar-custom {
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .welcome-text {
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        .hotel-name {
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .booking-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .booking-table th {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-add-booking {
+            background-color: var(--success);
+            color: white;
+            border: none;
+        }
+        
+        .btn-add-booking:hover {
+            background-color: #27ae60;
+        }
+        
+        .due-amount {
+            font-weight: bold;
+        }
+        
+        .due-positive {
+            color: var(--danger);
+        }
+        
+        .due-negative {
+            color: var(--success);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar d-none d-md-block">
+                <div class="text-center mb-4">
+                    <h4 class="hotel-name">HOTEL MANAGER</h4>
+                    <hr class="bg-light">
+                </div>
+                
+                  <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'dashboard' %}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'booking' %}">
+                            <i class="fas fa-bed"></i> Bookings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'extra_income' %}">
+                            <i class="fas fa-plus-circle"></i> Extra Income
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'expenses' %}">
+                            <i class="fas fa-minus-circle"></i> Expenses
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'blackroom' %}">
+                            <i class="fas fa-chart-line"></i> Black room
+                        </a>
+                    </li>
+                  
+                    <li class="nav-item mt-4">
+                        <a class="nav-link text-danger" href="{% url 'logout' %}">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+          
+            <div class="col-md-10 main-content">
+                <!-- Navbar -->
+                <nav class="navbar navbar-expand-lg navbar-custom mb-4 rounded">
+                    <div class="container-fluid">
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        
+                        <div class="d-flex align-items-center">
+                            <span class="welcome-text">Welcome, <span class="hotel-name" id="hotel-name">{{ hotel.hotel_name }}</span></span>
+                        </div>
+                        
+                        <div class="d-flex align-items-center">
+                            <span class="me-3"><i class="fas fa-calendar-day text-primary"></i> <span id="current-date">{{ today|date:"F d, Y" }}</span></span>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user-circle"></i> {{ request.user.username }}
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a></li>
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Settings</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+                
+                <!-- Page Header -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h4 class="mb-3">Bookings Management</h4>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <button class="btn btn-add-booking" data-bs-toggle="modal" data-bs-target="#bookingModal">
+                            <i class="fas fa-plus me-2"></i> Add New Booking
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Messages -->
+                {% if messages %}
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Bookings Table -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="booking-table">
+                            <table class="table table-striped table-hover">
+                          <thead>
+    <tr>
+        <th>Booking ID</th>
+        <th>Guest Name</th>
+        <th>Booking Mode</th>
+        <th>Payment Mode</th>
+        <th>Amount</th>
+        <th>QR Return</th>
+        <th>Due to OYO</th>
+        <th>Extra Income</th>  <!-- New column -->
+        <th>Not in QR</th>
+        <th>Date</th>
+        <th>Actions</th>
+    </tr>
+</thead>
+
+<!-- Add Extra Income to table rows -->
+<tbody>
+    {% for booking in bookings %}
+    <tr>
+        <td>{{ booking.booking_id }}</td>
+        <td>{{ booking.guest_name }}</td>
+        <td>{{ booking.get_booking_mode_display }}</td>
+        <td>{{ booking.get_payment_mode_display }}</td>
+        <td>₹{{ booking.booking_amount }}</td>
+        <td>₹{{ booking.return_qr }}</td>
+        <td>
+            <span class="due-amount {% if booking.due_to_oyo > 0 %}due-positive{% else %}due-negative{% endif %}">
+                ₹{{ booking.due_to_oyo }}
+            </span>
+        </td>
+        <td>
+            {% if booking.extra_income %}
+                ₹{{ booking.extra_income }}
+            {% else %}
+                -
+            {% endif %}
+        </td>
+        <td>
+            {% if booking.not_in_qr %}
+            <span class="badge bg-danger">Yes</span>
+            {% else %}
+            <span class="badge bg-success">No</span>
+            {% endif %}
+        </td>
+        <td>{{ booking.created_at|date:"M d, Y" }}</td>
+        <td>
+            <button class="btn btn-sm btn-outline-primary edit-booking-btn" 
+                    data-booking-id="{{ booking.id }}">
+                <i class="fas fa-edit"></i>
+            </button>
+            <a href="{% url 'delete_booking' booking.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this booking?')">
+                <i class="fas fa-trash"></i>
+            </a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="11" class="text-center py-4">No bookings found.</td>
+    </tr>
+    {% endfor %}
+</tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Booking Modal -->
+    <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bookingModalLabel">Add New Booking</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" action="{% url 'booking' %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="booking_id" class="form-label">Booking ID</label>
+                                {{ form.booking_id }}
+                                {% if form.booking_id.errors %}
+                                <div class="text-danger">{{ form.booking_id.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="guest_name" class="form-label">Guest Name</label>
+                                {{ form.guest_name }}
+                                {% if form.guest_name.errors %}
+                                <div class="text-danger">{{ form.guest_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="booking_mode" class="form-label">Booking Mode</label>
+                                {{ form.booking_mode }}
+                                {% if form.booking_mode.errors %}
+                                <div class="text-danger">{{ form.booking_mode.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="payment_mode" class="form-label">Payment Mode</label>
+                                {{ form.payment_mode }}
+                                {% if form.payment_mode.errors %}
+                                <div class="text-danger">{{ form.payment_mode.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="booking_amount" class="form-label">Booking Amount (₹)</label>
+                                {{ form.booking_amount }}
+                                {% if form.booking_amount.errors %}
+                                <div class="text-danger">{{ form.booking_amount.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="return_qr" class="form-label">QR Return Amount (₹)</label>
+                                {{ form.return_qr }}
+                                {% if form.return_qr.errors %}
+                                <div class="text-danger">{{ form.return_qr.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <div class="form-check">
+                                    {{ form.not_in_qr }}
+                                    <label class="form-check-label" for="not_in_qr">
+                                        Not in QR
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div id="due-display" class="alert alert-info"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save Booking</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Booking Modal -->
+    <div class="modal fade" id="editBookingModal" tabindex="-1" aria-labelledby="editBookingModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editBookingModalLabel">Edit Booking</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+             <form method="POST" action="{% url 'update_booking' %}" id="editBookingForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="id" id="edit_booking_id">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_booking_id_field" class="form-label">Booking ID</label>
+                                <input type="text" class="form-control" id="edit_booking_id_field" name="booking_id" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_guest_name" class="form-label">Guest Name</label>
+                                <input type="text" class="form-control" id="edit_guest_name" name="guest_name" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_booking_mode" class="form-label">Booking Mode</label>
+                                <select class="form-control" id="edit_booking_mode" name="booking_mode" required>
+                                    <option value="OYO">OYO</option>
+                                    <option value="OTA">OTA</option>
+                                    <option value="WALK_IN">Walk-in</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_payment_mode" class="form-label">Payment Mode</label>
+                                <select class="form-control" id="edit_payment_mode" name="payment_mode" required>
+                                    <option value="CASH">Cash</option>
+                                    <option value="UPI">UPI</option>
+                                    <option value="PREPAID">Prepaid</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_booking_amount" class="form-label">Booking Amount (₹)</label>
+                                <input type="number" step="0.01" class="form-control" id="edit_booking_amount" name="booking_amount" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_return_qr" class="form-label">QR Return Amount (₹)</label>
+                                <input type="number" step="0.01" class="form-control" id="edit_return_qr" name="return_qr" required>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="edit_not_in_qr" name="not_in_qr">
+                                    <label class="form-check-label" for="edit_not_in_qr">
+                                        Not in QR
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div id="edit-due-display" class="alert alert-info"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Update Booking</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Store booking data from Django template
+     const bookingData = {{ booking_data_json|safe }}; 
+        // Auto-close alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                bootstrap.Alert.getOrCreateInstance(alert).close();
+            });
+        }, 5000);
+        
+        // Calculate due amount when booking amount or QR return changes
+        function calculateDue(bookingMode, bookingAmount, returnQr, displayElement) {
+            if (bookingMode === 'OYO') {
+                const amount = parseFloat(bookingAmount) || 0;
+                const qr = parseFloat(returnQr) || 0;
+                const due = amount - qr;
+                displayElement.textContent = 'Due to OYO: ₹' + due.toFixed(2);
+                
+                if (due > 0) {
+                    displayElement.className = 'alert alert-warning';
+                } else {
+                    displayElement.className = 'alert alert-success';
+                }
+            } else {
+                displayElement.textContent = 'No amount due to OYO for non-OYO bookings';
+                displayElement.className = 'alert alert-info';
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add booking modal calculations
+            const bookingAmount = document.getElementById('id_booking_amount');
+            const returnQr = document.getElementById('id_return_qr');
+            const bookingMode = document.getElementById('id_booking_mode');
+            const dueDisplay = document.getElementById('due-display');
+            
+            if (bookingAmount && returnQr && bookingMode && dueDisplay) {
+                bookingAmount.addEventListener('input', function() {
+                    calculateDue(bookingMode.value, bookingAmount.value, returnQr.value, dueDisplay);
+                });
+                returnQr.addEventListener('input', function() {
+                    calculateDue(bookingMode.value, bookingAmount.value, returnQr.value, dueDisplay);
+                });
+                bookingMode.addEventListener('change', function() {
+                    calculateDue(bookingMode.value, bookingAmount.value, returnQr.value, dueDisplay);
+                });
+            }
+            
+            // Edit booking modal calculations
+            const editBookingAmount = document.getElementById('edit_booking_amount');
+            const editReturnQr = document.getElementById('edit_return_qr');
+            const editBookingMode = document.getElementById('edit_booking_mode');
+            const editDueDisplay = document.getElementById('edit-due-display');
+            
+            if (editBookingAmount && editReturnQr && editBookingMode && editDueDisplay) {
+                editBookingAmount.addEventListener('input', function() {
+                    calculateDue(editBookingMode.value, editBookingAmount.value, editReturnQr.value, editDueDisplay);
+                });
+                editReturnQr.addEventListener('input', function() {
+                    calculateDue(editBookingMode.value, editBookingAmount.value, editReturnQr.value, editDueDisplay);
+                });
+                editBookingMode.addEventListener('change', function() {
+                    calculateDue(editBookingMode.value, editBookingAmount.value, editReturnQr.value, editDueDisplay);
+                });
+            }
+            
+            // Edit booking button handlers
+            const editButtons = document.querySelectorAll('.edit-booking-btn');
+            editButtons.forEach(button => {
+            button.addEventListener('click', function() {
+    const bookingId = this.getAttribute('data-booking-id');
+    const data = bookingData[bookingId];
+    
+    if (data) {
+        // Populate the form fields - note the ID field change
+        document.getElementById('edit_booking_id').value = bookingId;  // This is the numeric ID
+        document.getElementById('edit_booking_id_field').value = data.booking_id; 
+  
+        document.getElementById('edit_guest_name').value = data.guest_name;
+        document.getElementById('edit_booking_mode').value = data.booking_mode;
+        document.getElementById('edit_payment_mode').value = data.payment_mode;
+        document.getElementById('edit_booking_amount').value = data.booking_amount;
+        document.getElementById('edit_return_qr').value = data.return_qr;
+        document.getElementById('edit_not_in_qr').checked = data.not_in_qr;
+        
+        // Calculate due amount
+        calculateDue(
+            data.booking_mode, 
+            data.booking_amount, 
+            data.return_qr, 
+            editDueDisplay
+        );
+        
+        // Show the modal
+        const editModal = new bootstrap.Modal(document.getElementById('editBookingModal'));
+        editModal.show();
+    }
+});
+            });
+        });
+    </script>
+</body>
+</html>

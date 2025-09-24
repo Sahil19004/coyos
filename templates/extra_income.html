@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Dashboard - Extra Income</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .sidebar {
+            background-color: var(--primary);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            padding-top: 20px;
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 12px 20px;
+            margin: 4px 0;
+            border-radius: 4px;
+        }
+        
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        .income-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .income-table th {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-add-income {
+            background-color: var(--success);
+            color: white;
+            border: none;
+        }
+        
+        .btn-add-income:hover {
+            background-color: #27ae60;
+        }
+        
+        .total-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--success);
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        
+        .source-badge {
+            font-size: 0.85rem;
+            padding: 0.35em 0.65em;
+        }
+        
+        .source-KITCHEN { background-color: #6f42c1; }
+        .source-MINI_BAR { background-color: #fd7e14; }
+        .source-PARKING { background-color: #20c997; }
+        .source-OTHER { background-color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar d-none d-md-block">
+                <div class="text-center mb-4">
+                    <h4 class="hotel-name">HOTEL MANAGER</h4>
+                    <hr class="bg-light">
+                </div>
+                
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'dashboard' %}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'booking' %}">
+                            <i class="fas fa-bed"></i> Bookings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'extra_income' %}">
+                            <i class="fas fa-plus-circle"></i> Extra Income
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'expenses' %}">
+                            <i class="fas fa-minus-circle"></i> Expenses
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'blackroom' %}">
+                            <i class="fas fa-chart-line"></i> Black room
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item mt-4">
+                        <a class="nav-link text-danger" href="{% url 'logout' %}">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-10 main-content">
+                <!-- Navbar -->
+                <nav class="navbar navbar-expand-lg navbar-custom mb-4 rounded">
+                    <div class="container-fluid">
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        
+                        <div class="d-flex align-items-center">
+                            <span class="welcome-text">Welcome, <span class="hotel-name" id="hotel-name">{{ hotel.hotel_name }}</span></span>
+                        </div>
+                        
+                        <div class="d-flex align-items-center">
+                            <span class="me-3"><i class="fas fa-calendar-day text-primary"></i> <span id="current-date">{{ today|date:"F d, Y" }}</span></span>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user-circle"></i> {{ request.user.username }}
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a></li>
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Settings</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+                
+                <!-- Page Header -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h4 class="mb-3">Extra Income Management</h4>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <button class="btn btn-add-income" data-bs-toggle="modal" data-bs-target="#incomeModal">
+                            <i class="fas fa-plus me-2"></i> Add New Income
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Total Income Card -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="total-card">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h5>Total Extra Income</h5>
+                                    <h2 class="text-success">₹{{ total_income|default:"0.00" }}</h2>
+                                    <p class="text-muted">This amount is automatically added to all bookings</p>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <i class="fas fa-money-bill-wave fa-3x text-success opacity-25"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Messages -->
+                {% if messages %}
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Income Table -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="income-table">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Source</th>
+                                        <th>Amount</th>
+                                        <th>Description</th>
+                                        <th>Associated Booking</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for income in incomes %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge source-badge source-{{ income.source }}">
+                                                {{ income.get_source_display }}
+                                            </span>
+                                        </td>
+                                        <td>₹{{ income.amount }}</td>
+                                        <td>{{ income.description|default:"-" }}</td>
+                                        <td>
+                                            {% if income.booking %}
+                                                {{ income.booking.booking_id }} - {{ income.booking.guest_name }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ income.created_at|date:"M d, Y" }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary edit-income-btn" 
+                                                    data-income-id="{{ income.id }}"
+                                                    data-income-source="{{ income.source }}"
+                                                    data-income-amount="{{ income.amount }}"
+                                                    data-income-description="{{ income.description|default:'' }}"
+                                                    data-income-booking="{{ income.booking.id|default:'' }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <a href="{% url 'delete_extra_income' income.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this income entry?')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">No extra income entries found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Income Modal -->
+    <div class="modal fade" id="incomeModal" tabindex="-1" aria-labelledby="incomeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="incomeModalLabel">Add New Income</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" action="{% url 'extra_income' %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="id_booking" class="form-label">Associated Booking (Optional)</label>
+                            {{ form.booking }}
+                            {% if form.booking.errors %}
+                            <div class="text-danger">{{ form.booking.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_source" class="form-label">Income Source</label>
+                            {{ form.source }}
+                            {% if form.source.errors %}
+                            <div class="text-danger">{{ form.source.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_amount" class="form-label">Amount (₹)</label>
+                            {{ form.amount }}
+                            {% if form.amount.errors %}
+                            <div class="text-danger">{{ form.amount.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_description" class="form-label">Description (Optional)</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="text-danger">{{ form.description.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save Income</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Income Modal -->
+    <div class="modal fade" id="editIncomeModal" tabindex="-1" aria-labelledby="editIncomeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editIncomeModalLabel">Edit Income</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" action="{% url 'update_extra_income' %}" id="editIncomeForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="id" id="edit_income_id">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="edit_booking" class="form-label">Associated Booking (Optional)</label>
+                            <select class="form-control" id="edit_booking" name="booking">
+                                <option value="">-- No Booking --</option>
+                                {% for booking in hotel.booking_set.all %}
+                                <option value="{{ booking.id }}">{{ booking.booking_id }} - {{ booking.guest_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_source" class="form-label">Income Source</label>
+                            <select class="form-control" id="edit_source" name="source" required>
+                                <option value="KITCHEN">Kitchen / Food</option>
+                                <option value="MINI_BAR">Mini Bar</option>
+                                <option value="PARKING">Parking</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Current Amount: ₹<span id="current_amount_display">0.00</span></label>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Operation</label>
+                            <div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="operation" id="operation_add" value="add" checked>
+                                    <label class="form-check-label" for="operation_add">Add to current amount</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="operation" id="operation_subtract" value="subtract">
+                                    <label class="form-check-label" for="operation_subtract">Subtract from current amount</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="amount_change" class="form-label">Amount Change (₹)</label>
+                            <input type="number" step="0.01" min="0.01" class="form-control" id="amount_change" name="amount_change" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_description" class="form-label">Description (Optional)</label>
+                            <input type="text" class="form-control" id="edit_description" name="description">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Update Income</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Edit income button handlers
+            const editButtons = document.querySelectorAll('.edit-income-btn');
+            editButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const incomeId = this.getAttribute('data-income-id');
+                    const source = this.getAttribute('data-income-source');
+                    const amount = this.getAttribute('data-income-amount');
+                    const description = this.getAttribute('data-income-description');
+                    const bookingId = this.getAttribute('data-income-booking');
+                    
+                    // Populate the form fields
+                    document.getElementById('edit_income_id').value = incomeId;
+                    document.getElementById('edit_source').value = source;
+                    document.getElementById('current_amount_display').textContent = amount;
+                    document.getElementById('amount_change').value = '';
+                    document.getElementById('edit_description').value = description;
+                    
+                    // Set the booking if it exists
+                    if (bookingId) {
+                        document.getElementById('edit_booking').value = bookingId;
+                    } else {
+                        document.getElementById('edit_booking').value = '';
+                    }
+                    
+                    // Show the modal
+                    const editModal = new bootstrap.Modal(document.getElementById('editIncomeModal'));
+                    editModal.show();
+                });
+            });
+            
+            // Auto-close alerts after 5 seconds
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(alert => {
+                    bootstrap.Alert.getOrCreateInstance(alert).close();
+                });
+            }, 5000);
+        });
+    </script>
+</body>
+</html>
