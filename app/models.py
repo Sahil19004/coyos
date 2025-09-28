@@ -9,6 +9,7 @@ class Hotel(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     hotel_name = models.CharField(max_length=200)
     hotel_code = models.CharField(max_length=50, unique=True)
+    qr_amount=models.IntegerField(default=0,null=True)
     address = models.TextField()
     contact_number = models.CharField(max_length=15)
     created_at = models.DateTimeField(auto_now_add=True)
