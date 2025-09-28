@@ -170,7 +170,7 @@
                     <hr class="bg-light">
                 </div>
                 
-                  <ul class="nav flex-column">
+                <ul class="nav flex-column">
                     <li class="nav-item">
                         <a class="nav-link active" href="{% url 'dashboard' %}">
                             <i class="fas fa-tachometer-alt"></i> Dashboard
@@ -205,7 +205,6 @@
                 </ul>
             </div>
             
-          
             <div class="col-md-10 main-content">
                 <!-- Navbar -->
                 <nav class="navbar navbar-expand-lg navbar-custom mb-4 rounded">
@@ -246,6 +245,59 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- Filters Section -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <form method="GET" action="{% url 'booking' %}" class="row g-3">
+                                    <!-- Search Filter -->
+                                    <div class="col-md-3">
+                                        <label for="search" class="form-label">Search by Booking ID</label>
+                                        <input type="text" class="form-control" id="search" name="search" 
+                                               value="{{ search_query }}" placeholder="Enter booking ID...">
+                                    </div>
+                                    
+                                    <!-- Quick Date Filter -->
+                                    <div class="col-md-3">
+                                        <label for="date_filter" class="form-label">Quick Date Filter</label>
+                                        <select class="form-control" id="date_filter" name="date_filter">
+                                            <option value="">All Dates</option>
+                                            <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
+                                            <option value="yesterday" {% if date_filter == 'yesterday' %}selected{% endif %}>Yesterday</option>
+                                            <option value="this_week" {% if date_filter == 'this_week' %}selected{% endif %}>This Week</option>
+                                            <option value="this_month" {% if date_filter == 'this_month' %}selected{% endif %}>This Month</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Custom Date Range -->
+                                    <div class="col-md-3">
+                                        <label for="start_date" class="form-label">Start Date</label>
+                                        <input type="date" class="form-control" id="start_date" name="start_date" 
+                                               value="{{ start_date }}">
+                                    </div>
+                                    
+                                    <div class="col-md-3">
+                                        <label for="end_date" class="form-label">End Date</label>
+                                        <input type="date" class="form-control" id="end_date" name="end_date" 
+                                               value="{{ end_date }}">
+                                    </div>
+                                    
+                                    <!-- Filter Buttons -->
+                                    <div class="col-md-12">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-filter me-2"></i>Apply Filters
+                                        </button>
+                                        <a href="{% url 'booking' %}" class="btn btn-secondary">
+                                            <i class="fas fa-times me-2"></i>Clear Filters
+                                        </a>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
                 <!-- Messages -->
                 {% if messages %}
@@ -266,69 +318,98 @@
                     <div class="col-md-12">
                         <div class="booking-table">
                             <table class="table table-striped table-hover">
-                          <thead>
-    <tr>
-        <th>Booking ID</th>
-        <th>Guest Name</th>
-        <th>Booking Mode</th>
-        <th>Payment Mode</th>
-        <th>Amount</th>
-        <th>QR Return</th>
-        <th>Due to OYO</th>
-        <th>Extra Income</th>  <!-- New column -->
-        <th>Not in QR</th>
-        <th>Date</th>
-        <th>Actions</th>
-    </tr>
-</thead>
-
-<!-- Add Extra Income to table rows -->
-<tbody>
-    {% for booking in bookings %}
-    <tr>
-        <td>{{ booking.booking_id }}</td>
-        <td>{{ booking.guest_name }}</td>
-        <td>{{ booking.get_booking_mode_display }}</td>
-        <td>{{ booking.get_payment_mode_display }}</td>
-        <td>₹{{ booking.booking_amount }}</td>
-        <td>₹{{ booking.return_qr }}</td>
-        <td>
-            <span class="due-amount {% if booking.due_to_oyo > 0 %}due-positive{% else %}due-negative{% endif %}">
-                ₹{{ booking.due_to_oyo }}
-            </span>
-        </td>
-        <td>
-            {% if booking.extra_income %}
-                ₹{{ booking.extra_income }}
-            {% else %}
-                -
-            {% endif %}
-        </td>
-        <td>
-            {% if booking.not_in_qr %}
-            <span class="badge bg-danger">Yes</span>
-            {% else %}
-            <span class="badge bg-success">No</span>
-            {% endif %}
-        </td>
-        <td>{{ booking.created_at|date:"M d, Y" }}</td>
-        <td>
-            <button class="btn btn-sm btn-outline-primary edit-booking-btn" 
-                    data-booking-id="{{ booking.id }}">
-                <i class="fas fa-edit"></i>
-            </button>
-            <a href="{% url 'delete_booking' booking.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this booking?')">
-                <i class="fas fa-trash"></i>
-            </a>
-        </td>
-    </tr>
-    {% empty %}
-    <tr>
-        <td colspan="11" class="text-center py-4">No bookings found.</td>
-    </tr>
-    {% endfor %}
-</tbody>
+                                <thead>
+                                    <tr>
+                                        <th>Booking ID</th>
+                                        <th>Guest Name</th>
+                                        <th>Booking Mode</th>
+                                        <th>Payment Mode</th>
+                                        <th>Amount</th>
+                                        <th>QR Return</th>
+                                        <th>Due to OYO</th>
+                                        <th>Extra Income</th>
+                                        <th>Not in QR</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for booking in page_obj %}
+                                    <tr>
+                                        <td>{{ booking.booking_id }}</td>
+                                        <td>{{ booking.guest_name }}</td>
+                                        <td>{{ booking.get_booking_mode_display }}</td>
+                                        <td>{{ booking.get_payment_mode_display }}</td>
+                                        <td>₹{{ booking.booking_amount }}</td>
+                                        <td>₹{{ booking.return_qr }}</td>
+                                        <td>
+                                            <span class="due-amount {% if booking.due_to_oyo > 0 %}due-positive{% else %}due-negative{% endif %}">
+                                                ₹{{ booking.due_to_oyo }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if booking.extra_income %}
+                                                ₹{{ booking.extra_income }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if booking.not_in_qr %}
+                                            <span class="badge bg-danger">Yes</span>
+                                            {% else %}
+                                            <span class="badge bg-success">No</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ booking.created_at|date:"M d, Y" }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary edit-booking-btn" 
+                                                    data-booking-id="{{ booking.id }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <a href="{% url 'delete_booking' booking.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this booking?')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="11" class="text-center py-4">No bookings found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
                             </table>
+                            
+                            <!-- Pagination -->
+                            {% if page_obj.paginator.num_pages > 1 %}
+                            <nav aria-label="Bookings pagination">
+                                <ul class="pagination justify-content-center">
+                                    {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}">First</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}">Previous</a>
+                                    </li>
+                                    {% endif %}
+                                    
+                                    <li class="page-item active">
+                                        <span class="page-link">
+                                            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                                        </span>
+                                    </li>
+                                    
+                                    {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}">Next</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}">Last</a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -420,7 +501,7 @@
                     <h5 class="modal-title" id="editBookingModalLabel">Edit Booking</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-             <form method="POST" action="{% url 'update_booking' %}" id="editBookingForm">
+                <form method="POST" action="{% url 'update_booking' %}" id="editBookingForm">
                     {% csrf_token %}
                     <input type="hidden" name="id" id="edit_booking_id">
                     <div class="modal-body">
@@ -482,107 +563,175 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <script>
-        // Store booking data from Django template
-     const bookingData = {{ booking_data_json|safe }}; 
-        // Auto-close alerts after 5 seconds
-        setTimeout(function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                bootstrap.Alert.getOrCreateInstance(alert).close();
-            });
-        }, 5000);
+  <script>
+    const bookingData = {{ booking_data_json|safe }};
+    const hotelQrAmount = {{ hotel.qr_amount|default:0 }};
+    
+    // Auto-close alerts after 5 seconds
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            bootstrap.Alert.getOrCreateInstance(alert).close();
+        });
+    }, 5000);
+    
+    // Calculate due amount and QR return
+    function calculateDueAndQR(bookingMode, bookingAmount, returnQr, notInQr, displayElement) {
+        const amount = parseFloat(bookingAmount) || 0;
+        const qr = parseFloat(returnQr) || 0;
         
-        // Calculate due amount when booking amount or QR return changes
-        function calculateDue(bookingMode, bookingAmount, returnQr, displayElement) {
-            if (bookingMode === 'OYO') {
-                const amount = parseFloat(bookingAmount) || 0;
-                const qr = parseFloat(returnQr) || 0;
-                const due = amount - qr;
-                displayElement.textContent = 'Due to OYO: ₹' + due.toFixed(2);
+        if (bookingMode === 'OYO') {
+            if (notInQr) {
+                // If "Not in QR" is checked, no due to OYO and QR return is 0
+                displayElement.textContent = 'Not in QR - Due to OYO: ₹0.00 | QR Return: ₹0.00';
+                displayElement.className = 'alert alert-info';
+            } else {
+                // Calculate QR return: booking amount - hotel QR amount
+                const calculatedQrReturn = Math.max(0, amount - hotelQrAmount);
+                const due = amount - calculatedQrReturn;
+                displayElement.textContent = 'Due to OYO: ₹' + due.toFixed(2) + ' | QR Return: ₹' + calculatedQrReturn.toFixed(2);
                 
                 if (due > 0) {
                     displayElement.className = 'alert alert-warning';
                 } else {
                     displayElement.className = 'alert alert-success';
                 }
-            } else {
-                displayElement.textContent = 'No amount due to OYO for non-OYO bookings';
-                displayElement.className = 'alert alert-info';
             }
+        } else {
+            displayElement.textContent = 'No amount due to OYO for non-OYO bookings';
+            displayElement.className = 'alert alert-info';
+        }
+    }
+    
+    // Update QR return field based on booking amount and not_in_qr checkbox
+    function updateQRReturn(bookingAmountInput, returnQrInput, notInQrCheckbox, bookingMode) {
+        const amount = parseFloat(bookingAmountInput.value) || 0;
+        
+        if (notInQrCheckbox.checked || bookingMode !== 'OYO') {
+            returnQrInput.value = '0.00';
+            returnQrInput.readOnly = true;
+            returnQrInput.style.backgroundColor = '#f8f9fa';
+        } else {
+            // Calculate QR return: booking amount - hotel QR amount
+            const calculatedQrReturn = Math.max(0, amount - hotelQrAmount);
+            returnQrInput.value = calculatedQrReturn.toFixed(2);
+            returnQrInput.readOnly = false;
+            returnQrInput.style.backgroundColor = '';
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add booking modal calculations
+        const bookingAmount = document.getElementById('id_booking_amount');
+        const returnQr = document.getElementById('id_return_qr');
+        const bookingMode = document.getElementById('id_booking_mode');
+        const notInQr = document.getElementById('id_not_in_qr');
+        const dueDisplay = document.getElementById('due-display');
+        
+        if (bookingAmount && returnQr && bookingMode && notInQr && dueDisplay) {
+            // Update calculations when any field changes
+            function updateAddBookingCalculations() {
+                updateQRReturn(bookingAmount, returnQr, notInQr, bookingMode.value);
+                calculateDueAndQR(bookingMode.value, bookingAmount.value, returnQr.value, notInQr.checked, dueDisplay);
+            }
+            
+            bookingAmount.addEventListener('input', updateAddBookingCalculations);
+            returnQr.addEventListener('input', function() {
+                // Only allow manual QR input if not in QR is unchecked
+                if (!notInQr.checked && bookingMode.value === 'OYO') {
+                    calculateDueAndQR(bookingMode.value, bookingAmount.value, returnQr.value, notInQr.checked, dueDisplay);
+                }
+            });
+            bookingMode.addEventListener('change', updateAddBookingCalculations);
+            notInQr.addEventListener('change', updateAddBookingCalculations);
+            
+            // Initial calculation
+            updateAddBookingCalculations();
         }
         
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add booking modal calculations
-            const bookingAmount = document.getElementById('id_booking_amount');
-            const returnQr = document.getElementById('id_return_qr');
-            const bookingMode = document.getElementById('id_booking_mode');
-            const dueDisplay = document.getElementById('due-display');
-            
-            if (bookingAmount && returnQr && bookingMode && dueDisplay) {
-                bookingAmount.addEventListener('input', function() {
-                    calculateDue(bookingMode.value, bookingAmount.value, returnQr.value, dueDisplay);
-                });
-                returnQr.addEventListener('input', function() {
-                    calculateDue(bookingMode.value, bookingAmount.value, returnQr.value, dueDisplay);
-                });
-                bookingMode.addEventListener('change', function() {
-                    calculateDue(bookingMode.value, bookingAmount.value, returnQr.value, dueDisplay);
-                });
+        // Edit booking modal calculations
+        const editBookingAmount = document.getElementById('edit_booking_amount');
+        const editReturnQr = document.getElementById('edit_return_qr');
+        const editBookingMode = document.getElementById('edit_booking_mode');
+        const editNotInQr = document.getElementById('edit_not_in_qr');
+        const editDueDisplay = document.getElementById('edit-due-display');
+        
+        if (editBookingAmount && editReturnQr && editBookingMode && editNotInQr && editDueDisplay) {
+            // Update calculations when any field changes
+            function updateEditBookingCalculations() {
+                updateQRReturn(editBookingAmount, editReturnQr, editNotInQr, editBookingMode.value);
+                calculateDueAndQR(editBookingMode.value, editBookingAmount.value, editReturnQr.value, editNotInQr.checked, editDueDisplay);
             }
             
-            // Edit booking modal calculations
-            const editBookingAmount = document.getElementById('edit_booking_amount');
-            const editReturnQr = document.getElementById('edit_return_qr');
-            const editBookingMode = document.getElementById('edit_booking_mode');
-            const editDueDisplay = document.getElementById('edit-due-display');
-            
-            if (editBookingAmount && editReturnQr && editBookingMode && editDueDisplay) {
-                editBookingAmount.addEventListener('input', function() {
-                    calculateDue(editBookingMode.value, editBookingAmount.value, editReturnQr.value, editDueDisplay);
-                });
-                editReturnQr.addEventListener('input', function() {
-                    calculateDue(editBookingMode.value, editBookingAmount.value, editReturnQr.value, editDueDisplay);
-                });
-                editBookingMode.addEventListener('change', function() {
-                    calculateDue(editBookingMode.value, editBookingAmount.value, editReturnQr.value, editDueDisplay);
-                });
-            }
-            
-            // Edit booking button handlers
-            const editButtons = document.querySelectorAll('.edit-booking-btn');
-            editButtons.forEach(button => {
+            editBookingAmount.addEventListener('input', updateEditBookingCalculations);
+            editReturnQr.addEventListener('input', function() {
+                // Only allow manual QR input if not in QR is unchecked
+                if (!editNotInQr.checked && editBookingMode.value === 'OYO') {
+                    calculateDueAndQR(editBookingMode.value, editBookingAmount.value, editReturnQr.value, editNotInQr.checked, editDueDisplay);
+                }
+            });
+            editBookingMode.addEventListener('change', updateEditBookingCalculations);
+            editNotInQr.addEventListener('change', updateEditBookingCalculations);
+        }
+        
+        // Edit booking button handlers
+        const editButtons = document.querySelectorAll('.edit-booking-btn');
+        editButtons.forEach(button => {
             button.addEventListener('click', function() {
-    const bookingId = this.getAttribute('data-booking-id');
-    const data = bookingData[bookingId];
-    
-    if (data) {
-        // Populate the form fields - note the ID field change
-        document.getElementById('edit_booking_id').value = bookingId;  // This is the numeric ID
-        document.getElementById('edit_booking_id_field').value = data.booking_id; 
-  
-        document.getElementById('edit_guest_name').value = data.guest_name;
-        document.getElementById('edit_booking_mode').value = data.booking_mode;
-        document.getElementById('edit_payment_mode').value = data.payment_mode;
-        document.getElementById('edit_booking_amount').value = data.booking_amount;
-        document.getElementById('edit_return_qr').value = data.return_qr;
-        document.getElementById('edit_not_in_qr').checked = data.not_in_qr;
-        
-        // Calculate due amount
-        calculateDue(
-            data.booking_mode, 
-            data.booking_amount, 
-            data.return_qr, 
-            editDueDisplay
-        );
-        
-        // Show the modal
-        const editModal = new bootstrap.Modal(document.getElementById('editBookingModal'));
-        editModal.show();
-    }
-});
+                const bookingId = this.getAttribute('data-booking-id');
+                const data = bookingData[bookingId];
+                
+                if (data) {
+                    // Populate the form fields
+                    document.getElementById('edit_booking_id').value = bookingId;
+                    document.getElementById('edit_booking_id_field').value = data.booking_id;
+                    document.getElementById('edit_guest_name').value = data.guest_name;
+                    document.getElementById('edit_booking_mode').value = data.booking_mode;
+                    document.getElementById('edit_payment_mode').value = data.payment_mode;
+                    document.getElementById('edit_booking_amount').value = data.booking_amount;
+                    document.getElementById('edit_return_qr').value = data.return_qr;
+                    document.getElementById('edit_not_in_qr').checked = data.not_in_qr;
+                    
+                    // Update QR field state based on not_in_qr status
+                    updateQRReturn(editBookingAmount, editReturnQr, editNotInQr, data.booking_mode);
+                    
+                    // Calculate due amount and QR return
+                    calculateDueAndQR(
+                        data.booking_mode, 
+                        data.booking_amount, 
+                        data.return_qr, 
+                        data.not_in_qr, 
+                        editDueDisplay
+                    );
+                    
+                    // Show the modal
+                    const editModal = new bootstrap.Modal(document.getElementById('editBookingModal'));
+                    editModal.show();
+                }
             });
         });
-    </script>
+        
+        // Add visual feedback for not in QR checkbox
+        function addCheckboxStyling() {
+            const checkboxes = [notInQr, editNotInQr].filter(Boolean);
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const label = document.querySelector(`label[for="${this.id}"]`);
+                    if (label) {
+                        if (this.checked) {
+                            label.style.color = '#dc3545';
+                            label.style.fontWeight = 'bold';
+                        } else {
+                            label.style.color = '';
+                            label.style.fontWeight = '';
+                        }
+                    }
+                });
+            });
+        }
+        
+        addCheckboxStyling();
+    });
+</script>
 </body>
 </html>

@@ -299,10 +299,10 @@
                                                             data-description="{{ expense.description|default:'' }}">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
-                                                    <a href="{% url 'delete_expense' expense.id %}" class="btn btn-sm btn-outline-danger" 
+                                                    <!-- <a href="{% url 'delete_expense' expense.id %}" class="btn btn-sm btn-outline-danger" 
                                                        onclick="return confirm('Are you sure you want to delete this expense?')">
                                                         <i class="fas fa-trash"></i>
-                                                    </a>
+                                                    </a> -->
                                                 </td>
                                             </tr>
                                             {% empty %}

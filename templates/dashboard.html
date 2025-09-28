@@ -6,8 +6,6 @@
     <title>Hotel Dashboard - {{ hotel.hotel_name }}</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -35,7 +33,7 @@
             margin: 0;
             padding: 0;
             line-height: 1.6;
-            overflow-x: hidden; /* Prevent horizontal scroll */
+            overflow-x: hidden;
         }
         
         .sidebar {
@@ -50,15 +48,6 @@
             z-index: 1000;
             overflow-y: auto;
             box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .sidebar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 3px;
         }
         
         .sidebar .brand {
@@ -139,21 +128,13 @@
             border-left: 4px solid var(--secondary);
         }
         
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
-        }
-        
         .stat-card.today { border-left-color: var(--success); }
         .stat-card.month { border-left-color: var(--warning); }
         .stat-card.pending { border-left-color: var(--danger); }
         .stat-card.qr { border-left-color: var(--qr-color); }
         .stat-card.expense { border-left-color: var(--expense-color); }
+        .stat-card.income { border-left-color: var(--success); }
+        .stat-card.not-in-qr { border-left-color: #e74c3c; }
         
         .card-icon {
             font-size: 3rem;
@@ -184,15 +165,6 @@
             letter-spacing: 0.5px;
         }
         
-        .chart-container {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-            margin-bottom: 25px;
-            border: none;
-        }
-        
         .navbar-custom {
             background: white;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -216,33 +188,10 @@
             -webkit-text-fill-color: transparent;
         }
         
-        .booking-badge {
-            font-size: 0.8rem;
-            padding: 0.4em 0.8em;
-            border-radius: 20px;
-            font-weight: 600;
-        }
-        
-        .progress {
-            height: 10px;
-            border-radius: 10px;
-            background-color: rgba(0, 0, 0, 0.05);
-        }
-        
-        .progress-bar {
-            border-radius: 10px;
-        }
-        
         .table-hover tbody tr:hover {
             background-color: rgba(52, 152, 219, 0.05);
             transform: translateX(2px);
             transition: all 0.3s ease;
-        }
-        
-        .alert-custom {
-            border-radius: 12px;
-            border: none;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
         
         .card-header {
@@ -323,17 +272,49 @@
             font-size: 1.1rem;
         }
         
-        /* Responsive improvements */
-        @media (max-width: 1200px) {
-            .stat-card .card-title {
-                font-size: 1.8rem;
-            }
-            
-            .card-icon {
-                font-size: 2.5rem;
-            }
+        /* Fix for responsive layout issues */
+        .row.mx-0 {
+            margin-left: 0;
+            margin-right: 0;
         }
         
+        .row.mx-0 > [class*="col-"] {
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+        
+        /* Fix for card alignment in grid */
+        .dashboard-card .card-body {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        /* Fix for table responsiveness */
+        .table-responsive {
+            overflow-x: auto;
+        }
+        
+        /* Fix for navbar alignment */
+        .navbar-custom .container-fluid {
+            padding-left: 0;
+            padding-right: 0;
+        }
+        
+        /* Fix for mobile toggle button */
+        .mobile-toggle {
+            display: none;
+            background: var(--primary);
+            border: none;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+        
+        /* Fix for sidebar on mobile */
         @media (max-width: 992px) {
             .sidebar {
                 transform: translateX(-100%);
@@ -363,18 +344,10 @@
                 font-size: 2.5rem;
             }
             
-            .navbar-custom {
-                padding: 1rem;
-            }
-            
-            .welcome-text {
-                font-size: 1rem;
-            }
-            
-            /* Fix for stats cards on tablets */
-            .col-xl-2 {
-                flex: 0 0 33.333333%;
-                max-width: 33.333333%;
+            /* Fix for grid layout on tablets */
+            .col-xl-2, .col-md-4 {
+                flex: 0 0 50%;
+                max-width: 50%;
             }
         }
         
@@ -391,35 +364,26 @@
                 padding: 1rem;
             }
             
-            .chart-container {
-                padding: 15px;
-            }
-            
             .navbar-custom {
                 flex-direction: column;
                 text-align: center;
             }
             
-            .navbar-custom .d-flex {
-                justify-content: center;
-                margin-top: 10px;
-            }
-            
-            /* Fix for stats cards on mobile */
+            /* Fix for grid layout on mobile */
             .col-xl-2, .col-md-4 {
-                flex: 0 0 50%;
-                max-width: 50%;
-            }
-            
-            /* Date filter form responsiveness */
-            .row.g-3 .col-md-3 {
                 flex: 0 0 100%;
                 max-width: 100%;
-                margin-bottom: 15px;
             }
             
-            .row.g-3 .col-md-3:last-child {
-                margin-bottom: 0;
+            /* Fix for date filter form */
+            .card-body .row.g-3 {
+                margin-left: -5px;
+                margin-right: -5px;
+            }
+            
+            .card-body .row.g-3 > [class*="col-"] {
+                padding-left: 5px;
+                padding-right: 5px;
             }
         }
         
@@ -437,115 +401,32 @@
                 right: 10px;
             }
             
-            .stat-card .card-body {
-                padding: 0.75rem;
-            }
-            
-            .chart-container {
-                padding: 10px;
-            }
-            
-            /* Fix for stats cards on small mobile */
             .col-xl-2, .col-md-4, .col-sm-6 {
                 flex: 0 0 100%;
                 max-width: 100%;
             }
             
-            /* Table responsiveness */
-            .table-responsive {
-                font-size: 0.85rem;
-            }
-            
-            /* Card header adjustments */
-            .card-header {
-                padding: 1rem;
-            }
-            
-            .card-header h5 {
-                font-size: 1.1rem;
+            /* Fix for small screen table */
+            .table-sm {
+                font-size: 0.875rem;
             }
         }
         
-        @media (max-width: 400px) {
-            .stat-card .card-title {
-                font-size: 1.3rem;
-            }
-            
-            .stat-card .card-subtitle {
-                font-size: 0.8rem;
-            }
-            
-            .card-text.small {
-                font-size: 0.75rem;
-            }
-        }
-        
-        .mobile-toggle {
-            display: none;
-            background: var(--primary);
-            border: none;
-            color: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-weight: 500;
-            margin-bottom: 15px;
-            width: 100%;
-        }
-        
-        /* Additional utility classes */
         .text-gradient {
             background: linear-gradient(45deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         
-        .bg-gradient-primary {
-            background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
+        /* Fix for grid gutters */
+        .gutter-fix {
+            margin-left: -10px;
+            margin-right: -10px;
         }
         
-        .shadow-custom {
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08) !important;
-        }
-        
-        /* Animation classes */
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .slide-in {
-            animation: slideIn 0.6s ease-out;
-        }
-        
-        @keyframes slideIn {
-            from { transform: translateX(-30px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        /* Prevent horizontal overflow */
-        .container-fluid {
-            max-width: 100%;
-            overflow-x: hidden;
-        }
-        
-        .row {
-            margin-left: 0;
-            margin-right: 0;
-        }
-        
-        .col-md-12, .col-lg-8, .col-lg-4, .col-md-3 {
-            padding-left: 8px;
-            padding-right: 8px;
-        }
-        
-        /* Ensure charts are responsive */
-        canvas {
-            max-width: 100%;
-            height: auto !important;
+        .gutter-fix > [class*="col-"] {
+            padding-left: 10px;
+            padding-right: 10px;
         }
     </style>
 </head>
@@ -554,8 +435,8 @@
         <div class="row g-0">
             <!-- Sidebar -->
             <div class="sidebar d-none d-md-block" id="sidebar">
-                <div class="text-center mb-4">
-                    <h4 class="hotel-name">HOTEL MANAGER</h4>
+                <div class="brand">
+                    <h4>HOTEL MANAGER</h4>
                     <small class="text-light">{{ hotel.hotel_name }}</small>
                     <hr class="bg-light">
                 </div>
@@ -627,8 +508,8 @@
                 </nav>
 
                 <!-- Date Filter Section -->
-                <div class="row mb-4 mx-0">
-                    <div class="col-12 px-2">
+                <div class="row mb-4 gutter-fix">
+                    <div class="col-12">
                         <div class="card">
                             <div class="card-body">
                                 <h5 class="card-title"><i class="fas fa-filter text-primary"></i> Filter Data</h5>
@@ -667,13 +548,13 @@
                 </div>
 
                 <!-- Stats Overview -->
-                <div class="row mb-4 mx-0">
-                    <div class="col-12 px-2">
+                <div class="row mb-4 gutter-fix">
+                    <div class="col-12">
                         <h4 class="mb-3"><i class="fas fa-chart-bar text-primary"></i> Dashboard Overview</h4>
                     </div>
                     
                     <!-- Today's Stats -->
-                    <div class="col-xl-2 col-md-4 col-sm-6 mb-3 px-2">
+                    <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
                         <div class="card stat-card today dashboard-card">
                             <div class="card-body">
                                 <h6 class="card-subtitle mb-2 text-muted">Today's Bookings</h6>
@@ -683,8 +564,7 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="col-xl-2 col-md-4 col-sm-6 mb-3 px-2">
+                      <div class="col-xl-2 col-md-4 col-sm-6 mb-3 px-2">
                         <div class="card stat-card dashboard-card">
                             <div class="card-body">
                                 <h6 class="card-subtitle mb-2 text-muted">Today's Revenue</h6>
@@ -703,19 +583,29 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="col-xl-2 col-md-4 col-sm-6 mb-3 px-2">
-                        <div class="card stat-card month dashboard-card">
+                    <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+                        <div class="card stat-card income dashboard-card">
                             <div class="card-body">
-                                <h6 class="card-subtitle mb-2 text-muted">Monthly Revenue</h6>
-                                <h3 class="card-title text-warning">₹{{ stats.month.total_revenue|floatformat:0 }}</h3>
-                                <p class="card-text small">{{ stats.month.total_bookings }} bookings</p>
-                                <i class="fas fa-chart-line card-icon text-warning"></i>
+                                <h6 class="card-subtitle mb-2 text-muted">Extra Income</h6>
+                                <h3 class="card-title text-success">₹{{ extra_income|floatformat:0 }}</h3>
+                                <p class="card-text small">Additional revenue</p>
+                                <i class="fas fa-plus-circle card-icon text-success"></i>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="col-xl-2 col-md-4 col-sm-6 mb-3 px-2">
+                    <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+                        <div class="card stat-card expense dashboard-card">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Total Expenses</h6>
+                                <h3 class="card-title text-danger">₹{{ expenses|floatformat:0 }}</h3>
+                                <p class="card-text small">Operational costs</p>
+                                <i class="fas fa-minus-circle card-icon text-danger"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
                         <div class="card stat-card qr dashboard-card">
                             <div class="card-body">
                                 <h6 class="card-subtitle mb-2 text-muted">QR Amount</h6>
@@ -726,7 +616,7 @@
                         </div>
                     </div>
                     
-                    <div class="col-xl-2 col-md-4 col-sm-6 mb-3 px-2">
+                    <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
                         <div class="card stat-card pending dashboard-card">
                             <div class="card-body">
                                 <h6 class="card-subtitle mb-2 text-muted">Due to OYO</h6>
@@ -736,123 +626,101 @@
                             </div>
                         </div>
                     </div>
+                </div>
+                
+                <!-- Additional Stats Row -->
+                <div class="row mb-4 gutter-fix">
+                    <div class="col-xl-3 col-md-6 mb-3">
+                        <div class="card stat-card not-in-qr dashboard-card">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">Not in QR</h6>
+                                <h3 class="card-title text-danger">₹{{ qr_stats.not_in_qr_amount|floatformat:0 }}</h3>
+                                <p class="card-text small">{{ qr_stats.not_in_qr_count }} bookings</p>
+                                <i class="fas fa-times-circle card-icon text-danger"></i>
+                            </div>
+                        </div>
+                    </div>
                     
-                    <div class="col-xl-2 col-md-4 col-sm-6 mb-3 px-2">
-                        <div class="card stat-card expense dashboard-card">
+                    <div class="col-xl-3 col-md-6 mb-3">
+                        <div class="card stat-card month dashboard-card">
                             <div class="card-body">
-                                <h6 class="card-subtitle mb-2 text-muted">Total sale</h6>
-                                <h3 class="card-title {% if stats.month.net_profit > 0 %}text-success{% else %}text-danger{% endif %}">
-                                    ₹{{ stats.month.net_profit|floatformat:0 }}
-                                </h3>
-                                <p class="card-text small">After expenses</p>
-                                <i class="fas fa-money-bill-wave card-icon" style="color: #e67e22;"></i>
+                                <h6 class="card-subtitle mb-2 text-muted">Total Bookings</h6>
+                                <h3 class="card-title text-warning">{{ stats.month.total_bookings }}</h3>
+                                <p class="card-text small">Filtered period</p>
+                                <i class="fas fa-bed card-icon text-warning"></i>
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="col-xl-3 col-md-6 mb-3">
+                        <div class="card stat-card dashboard-card">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">OYO Percentage</h6>
+                                <h3 class="card-title text-info">{{ stats.oyo_percentage }}%</h3>
+                                <p class="card-text small">of total bookings</p>
+                                <i class="fas fa-percentage card-icon text-info"></i>
+                            </div>
+                        </div>
+                    </div>
+                  
                 </div>
                 
-                <!-- Charts Row -->
-                <div class="row mb-4 mx-0">
-                    <div class="col-lg-8 col-md-12 mb-3 px-2">
+                <!-- QR Analysis Section -->
+                <div class="row mb-4 gutter-fix">
+                    <div class="col-lg-6 col-md-12 mb-4">
                         <div class="card dashboard-card">
                             <div class="card-header">
-                                <h5 class="mb-0"><i class="fas fa-chart-line text-success me-2"></i>Monthly Performance (Last 6 Months)</h5>
+                                <h5 class="mb-0"><i class="fas fa-qrcode text-primary me-2"></i>QR Analysis</h5>
                             </div>
-                            <div class="card-body">
-                                <canvas id="monthlyChart" height="250"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-4 col-md-12 mb-3 px-2">
-                        <div class="card dashboard-card">
-                            <div class="card-header">
-                                <h5 class="mb-0"><i class="fas fa-chart-pie text-info me-2"></i>Booking Sources</h5>
-                            </div>
-                            <div class="card-body">
-                                <canvas id="bookingSourceChart" height="250"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Additional Charts -->
-                <div class="row mb-4 mx-0">
-                    <div class="col-12 px-2">
-                        <div class="card dashboard-card">
-                            <div class="card-header">
-                                <h5 class="mb-0"><i class="fas fa-chart-area text-warning me-2"></i>Daily Performance - Current Month</h5>
-                            </div>
-                            <div class="card-body">
-                                <canvas id="dailyChart" height="150"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Recent Bookings & Quick Actions -->
-                <div class="row mx-0">
-                    <!-- Recent Bookings -->
-                    <div class="col-lg-8 col-md-12 mb-4 px-2">
-                        <div class="card dashboard-card">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0"><i class="fas fa-list text-info me-2"></i>Recent Bookings</h5>
-                                <a href="{% url 'booking' %}" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-plus me-1"></i>Add New Booking
-                                </a>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-sm">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Guest</th>
-                                                <th>Room</th>
-                                                <th>Mode</th>
-                                                <th>Amount</th>
-                                                <th>Payment</th>
-                                                <th>Date</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for booking in recent_bookings %}
-                                            <tr>
-                                                <td>{{ booking.guest_name|title }}</td>
-                                                <td><span class="badge bg-secondary">{{ booking.room_number }}</span></td>
-                                                <td>
-                                                    <span class="badge 
-                                                        {% if booking.booking_mode == 'OYO' %}bg-success
-                                                        {% elif booking.booking_mode == 'OTA' %}bg-warning
-                                                        {% else %}bg-info{% endif %}">
-                                                        {{ booking.booking_mode }}
-                                                    </span>
-                                                </td>
-                                                <td>₹{{ booking.booking_amount|floatformat:0 }}</td>
-                                                <td>
-                                                    <span class="badge 
-                                                        {% if booking.payment_mode == 'CASH' %}bg-success
-                                                        {% elif booking.payment_mode == 'UPI' %}bg-primary
-                                                        {% else %}bg-warning{% endif %}">
-                                                        {{ booking.payment_mode }}
-                                                    </span>
-                                                </td>
-                                                <td class="small">{{ booking.created_at|date:"M d, H:i" }}</td>
-                                            </tr>
-                                            {% empty %}
-                                            <tr>
-                                                <td colspan="6" class="text-center py-3 text-muted">
-                                                    No recent bookings found
-                                                </td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
+                            <div class="card-body qr-analysis-card">
+                                <div class="qr-metric">
+                                    <span class="qr-metric-label">
+                                        <i class="fas fa-receipt text-primary"></i>
+                                        Total OYO Bookings Amount
+                                    </span>
+                                    <span class="qr-metric-value">₹{{ qr_stats.total_booking_amount|floatformat:0 }}</span>
+                                </div>
+                                <div class="qr-metric">
+                                    <span class="qr-metric-label">
+                                        <i class="fas fa-qrcode text-success"></i>
+                                        Total QR Returned
+                                    </span>
+                                    <span class="qr-metric-value">₹{{ qr_stats.total_qr_amount|floatformat:0 }}</span>
+                                </div>
+                                <div class="qr-metric">
+                                    <span class="qr-metric-label">
+                                        <i class="fas fa-exclamation-triangle text-danger"></i>
+                                        Due to OYO
+                                    </span>
+                                    <span class="qr-metric-value text-danger">₹{{ qr_stats.due_to_oyo|floatformat:0 }}</span>
+                                </div>
+                                <div class="qr-metric">
+                                    <span class="qr-metric-label">
+                                        <i class="fas fa-times-circle text-warning"></i>
+                                        Not in QR Amount
+                                    </span>
+                                    <span class="qr-metric-value text-warning">₹{{ qr_stats.not_in_qr_amount|floatformat:0 }}</span>
+                                </div>
+                                <div class="qr-metric">
+                                    <span class="qr-metric-label">
+                                        <i class="fas fa-list-ol text-info"></i>
+                                        Total QR Bookings
+                                    </span>
+                                    <span class="qr-metric-value">{{ qr_stats.qr_bookings_count }}</span>
+                                </div>
+                                <div class="qr-metric">
+                                    <span class="qr-metric-label">
+                                        <i class="fas fa-clock text-secondary"></i>
+                                        Pending QR Settlements
+                                    </span>
+                                    <span class="qr-metric-value">{{ pending_qr }}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Quick Actions -->
-                    <div class="col-lg-4 col-md-12 mb-4 px-2">
+                    <div class="col-lg-6 col-md-12 mb-4">
                         <div class="card dashboard-card">
                             <div class="card-header">
                                 <h5 class="mb-0"><i class="fas fa-bolt text-warning me-2"></i>Quick Actions</h5>
@@ -876,6 +744,82 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Recent Bookings -->
+                <div class="row gutter-fix">
+                    <div class="col-12 mb-4">
+                        <div class="card dashboard-card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0"><i class="fas fa-list text-info me-2"></i>Recent Bookings</h5>
+                                <a href="{% url 'booking' %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-plus me-1"></i>Add New Booking
+                                </a>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Guest</th>
+                                                <th>Booking ID</th>
+                                                <th>Mode</th>
+                                                <th>Amount</th>
+                                                <th>Payment</th>
+                                                <th>QR Status</th>
+                                                <th>Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for booking in recent_bookings %}
+                                            <tr>
+                                                <td>{{ booking.guest_name|title }}</td>
+                                                <td><span class="badge bg-secondary">{{ booking.booking_id }}</span></td>
+                                                <td>
+                                                    <span class="badge 
+                                                        {% if booking.booking_mode == 'OYO' %}bg-success
+                                                        {% elif booking.booking_mode == 'OTA' %}bg-warning
+                                                        {% else %}bg-info{% endif %}">
+                                                        {{ booking.booking_mode }}
+                                                    </span>
+                                                </td>
+                                                <td>₹{{ booking.booking_amount|floatformat:0 }}</td>
+                                                <td>
+                                                    <span class="badge 
+                                                        {% if booking.payment_mode == 'CASH' %}bg-success
+                                                        {% elif booking.payment_mode == 'UPI' %}bg-primary
+                                                        {% else %}bg-warning{% endif %}">
+                                                        {{ booking.payment_mode }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {% if booking.booking_mode == 'OYO' %}
+                                                        {% if booking.not_in_qr %}
+                                                            <span class="badge bg-danger">Not in QR</span>
+                                                        {% elif booking.return_qr < booking.booking_amount %}
+                                                            <span class="badge bg-warning">Pending</span>
+                                                        {% else %}
+                                                            <span class="badge bg-success">Settled</span>
+                                                        {% endif %}
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">N/A</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="small">{{ booking.created_at|date:"M d, H:i" }}</td>
+                                            </tr>
+                                            {% empty %}
+                                            <tr>
+                                                <td colspan="7" class="text-center py-3 text-muted">
+                                                    No recent bookings found
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -889,183 +833,7 @@
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('show');
         }
-        
-        // Monthly Performance Chart
-        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
-        const monthlyChart = new Chart(monthlyCtx, {
-            type: 'line',
-            data: {
-                labels: [
-                    {% for month in monthly_data %}
-                        '{{ month.month }}'{% if not forloop.last %},{% endif %}
-                    {% endfor %}
-                ],
-                datasets: [{
-                    label: 'Revenue',
-                    data: [
-                        {% for month in monthly_data %}
-                            {{ month.revenue }}{% if not forloop.last %},{% endif %}
-                        {% endfor %}
-                    ],
-                    borderColor: 'rgb(52, 152, 219)',
-                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }, {
-                    label: 'Expenses',
-                    data: [
-                        {% for month in monthly_data %}
-                            {{ month.expenses }}{% if not forloop.last %},{% endif %}
-                        {% endfor %}
-                    ],
-                    borderColor: 'rgb(231, 76, 60)',
-                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }, {
-                    label: 'Profit',
-                    data: [
-                        {% for month in monthly_data %}
-                            {{ month.profit }}{% if not forloop.last %},{% endif %}
-                        {% endfor %}
-                    ],
-                    borderColor: 'rgb(46, 204, 113)',
-                    backgroundColor: 'rgba(46, 204, 113, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    },
-                    title: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return '₹' + value.toLocaleString();
-                            }
-                        }
-                    }
-                },
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
-                },
-            }
-        });
-        
-        // Booking Source Pie Chart
-        const bookingSourceCtx = document.getElementById('bookingSourceChart').getContext('2d');
-        const bookingSourceChart = new Chart(bookingSourceCtx, {
-            type: 'doughnut',
-            data: {
-                labels: [
-                    {% for mode in booking_modes %}
-                        '{{ mode.booking_mode }}'{% if not forloop.last %},{% endif %}
-                    {% endfor %}
-                ],
-                datasets: [{
-                    data: [
-                        {% for mode in booking_modes %}
-                            {{ mode.count }}{% if not forloop.last %},{% endif %}
-                        {% endfor %}
-                    ],
-                    backgroundColor: [
-                        'rgba(46, 204, 113, 0.8)',
-                        'rgba(52, 152, 219, 0.8)',
-                        'rgba(155, 89, 182, 0.8)',
-                        'rgba(241, 196, 15, 0.8)',
-                        'rgba(231, 76, 60, 0.8)'
-                    ],
-                    borderColor: [
-                        'rgba(46, 204, 113, 1)',
-                        'rgba(52, 152, 219, 1)',
-                        'rgba(155, 89, 182, 1)',
-                        'rgba(241, 196, 15, 1)',
-                        'rgba(231, 76, 60, 1)'
-                    ],
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const label = context.label || '';
-                                const value = context.parsed || 0;
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = ((value / total) * 100).toFixed(1);
-                                return `${label}: ${value} (${percentage}%)`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-        
-        // Daily Performance Chart
-        const dailyCtx = document.getElementById('dailyChart').getContext('2d');
-        const dailyChart = new Chart(dailyCtx, {
-            type: 'bar',
-            data: {
-                labels: [
-                    {% for day in daily_data %}
-                        'Day {{ forloop.counter }}'{% if not forloop.last %},{% endif %}
-                    {% endfor %}
-                ],
-                datasets: [{
-                    label: 'Daily Revenue',
-                    data: [
-                        {% for amount in daily_data %}
-                            {{ amount }}{% if not forloop.last %},{% endif %}
-                        {% endfor %}
-                    ],
-                    backgroundColor: 'rgba(52, 152, 219, 0.6)',
-                    borderColor: 'rgba(52, 152, 219, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return '₹' + value.toLocaleString();
-                            }
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            maxTicksLimit: 10
-                        }
-                    }
-                }
-            }
-        });
-        
+       
         // Auto-refresh every 5 minutes
         setTimeout(function() {
             location.reload();
@@ -1082,17 +850,6 @@
             link.addEventListener('click', function(e) {
                 if (this.getAttribute('href').startsWith('/')) {
                     this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading...';
-                }
-            });
-        });
-        
-        // Format numbers on load
-        document.addEventListener('DOMContentLoaded', function() {
-            const numberElements = document.querySelectorAll('.format-number');
-            numberElements.forEach(function(el) {
-                const number = parseFloat(el.textContent.replace(/[^\d.-]/g, ''));
-                if (!isNaN(number)) {
-                    el.textContent = '₹' + number.toLocaleString('en-IN');
                 }
             });
         });

@@ -53,7 +53,6 @@ def logout_view(request):
     logout(request)
     messages.info(request, 'You have been logged out successfully.')
     return redirect('login')
-
 @login_required
 def dashboard(request):
     try:
@@ -71,17 +70,14 @@ def dashboard(request):
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
     
-    # Set default date range (current month if no dates provided)
+    # Set default date range (SAME DAY if no dates provided)
     if not start_date:
-        month_start = today.replace(day=1)
-        start_date = month_start
+        start_date = today
     else:
         start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
     
     if not end_date:
-        next_month = today.replace(day=28) + timedelta(days=4)
-        month_end = next_month - timedelta(days=next_month.day)
-        end_date = min(month_end, today)  # Don't exceed today's date
+        end_date = today
     else:
         end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
         if end_date > today:
@@ -97,6 +93,22 @@ def dashboard(request):
         created_at__date=today
     )
     
+    # Today's extra income
+    today_extra_income = ExtraIncome.objects.filter(
+        hotel=hotel,
+        created_at__date=today
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+    
+    # Today's expenses
+    today_expenses = DailyExpense.objects.filter(
+        hotel=hotel,
+        created_at__date=today
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+    
+    # Calculate today's revenue (bookings + extra income - expenses)
+    today_booking_revenue = today_bookings.aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00')
+    today_revenue = today_booking_revenue + today_extra_income - today_expenses
+    
     # Calculate filtered stats based on date range
     filtered_bookings = Booking.objects.filter(
         hotel=hotel, 
@@ -104,19 +116,52 @@ def dashboard(request):
         created_at__date__lte=end_date
     )
     
-    # QR Analysis for filtered period
+    # QR Analysis for filtered period - EXCLUDE bookings not in QR
     qr_bookings = Booking.objects.filter(
         hotel=hotel,
         booking_mode='OYO',
-        not_in_qr=False
+        not_in_qr=False  # Only include bookings that are in QR
     ).filter(
         created_at__date__gte=start_date,
         created_at__date__lte=end_date
     )
     
-    total_qr_amount = qr_bookings.aggregate(total=Sum('return_qr'))['total'] or Decimal('0.00')
-    total_booking_amount = qr_bookings.aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00')
-    due_to_oyo = total_booking_amount - total_qr_amount
+    # Separate prepaid and non-prepaid bookings for QR calculation
+    non_prepaid_qr_bookings = qr_bookings.exclude(payment_mode='PREPAID')
+    prepaid_qr_bookings = qr_bookings.filter(payment_mode='PREPAID')
+    
+    # Calculate QR amounts - Only actual QR return amounts, not excess
+    total_qr_amount = non_prepaid_qr_bookings.aggregate(total=Sum('return_qr'))['total'] or Decimal('0.00')
+    
+    # Calculate due amounts separately for prepaid and non-prepaid
+    non_prepaid_due = non_prepaid_qr_bookings.aggregate(
+        total=Sum(F('booking_amount') - F('return_qr'))
+    )['total'] or Decimal('0.00')
+    
+    prepaid_due = prepaid_qr_bookings.aggregate(
+        total=Sum(F('booking_amount') - F('return_qr'))
+    )['total'] or Decimal('0.00')
+    
+    # Total due from OYO bookings (before subtracting not_in_qr)
+    total_oyo_due = non_prepaid_due + prepaid_due
+    
+    # Get bookings NOT in QR for the filtered period
+    not_in_qr_bookings = Booking.objects.filter(
+        hotel=hotel,
+        booking_mode='OYO',
+        not_in_qr=True
+    ).filter(
+        created_at__date__gte=start_date,
+        created_at__date__lte=end_date
+    )
+    
+    not_in_qr_amount = not_in_qr_bookings.aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00')
+    
+    # Calculate final due to OYO - can be negative
+    due_to_oyo = total_oyo_due - not_in_qr_amount
+    
+    # Track if there's excess (negative due means OYO owes you money)
+    excess_amount = abs(due_to_oyo) if due_to_oyo < 0 else Decimal('0.00')
     
     # Extra income for filtered period
     extra_income = ExtraIncome.objects.filter(
@@ -135,68 +180,6 @@ def dashboard(request):
     # Calculate net profit for filtered period
     total_revenue = (filtered_bookings.aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00')) + extra_income
     net_profit = total_revenue - expenses
-    
-    # Get previous reports for charts (last 6 months regardless of filter)
-    previous_reports = MonthlyReport.objects.filter(hotel=hotel).order_by('-month')[:6]
-    
-    # Prepare data for charts - monthly data (unchanged)
-    months_data = []
-    for report in reversed(previous_reports):  # Show oldest first in chart
-        months_data.append({
-            'month': report.month.strftime('%b %Y'),
-            'revenue': float(report.total_revenue),
-            'expenses': float(report.total_expenses),
-            'profit': float(report.net_profit)
-        })
-    
-    # If we don't have enough historical data, fill with current month data
-    if len(months_data) < 6:
-        # Get current month data for filling
-        current_month_start = today.replace(day=1)
-        next_month = current_month_start.replace(day=28) + timedelta(days=4)
-        current_month_end = next_month - timedelta(days=next_month.day)
-        
-        current_month_bookings = Booking.objects.filter(
-            hotel=hotel, 
-            created_at__date__gte=current_month_start,
-            created_at__date__lte=current_month_end
-        )
-        
-        current_extra_income = ExtraIncome.objects.filter(
-            hotel=hotel,
-            created_at__date__gte=current_month_start,
-            created_at__date__lte=current_month_end
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        
-        current_expenses = DailyExpense.objects.filter(
-            hotel=hotel,
-            created_at__date__gte=current_month_start,
-            created_at__date__lte=current_month_end
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        
-        current_total_revenue = (current_month_bookings.aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00')) + current_extra_income
-        current_net_profit = current_total_revenue - current_expenses
-        
-        months_data.append({
-            'month': current_month_start.strftime('%b %Y'),
-            'revenue': float(current_total_revenue),
-            'expenses': float(current_expenses),
-            'profit': float(current_net_profit)
-        })
-    
-    # Daily data for the filtered period
-    daily_data = []
-    date_range_days = (end_date - start_date).days + 1
-    
-    for i in range(date_range_days):
-        current_date = start_date + timedelta(days=i)
-        if current_date <= today:  # Only include dates up to today
-            day_bookings = Booking.objects.filter(
-                hotel=hotel,
-                created_at__date=current_date
-            )
-            day_revenue = day_bookings.aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00')
-            daily_data.append(float(day_revenue))
     
     # Recent bookings (all time, not filtered)
     recent_bookings = Booking.objects.filter(hotel=hotel).order_by('-created_at')[:10]
@@ -231,6 +214,11 @@ def dashboard(request):
     else:
         revenue_change = 100 if current_revenue > 0 else 0
     
+    # Additional stats for prepaid bookings
+    prepaid_booking_amount = prepaid_qr_bookings.aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00')
+    prepaid_count = prepaid_qr_bookings.count()
+    prepaid_return_qr = prepaid_qr_bookings.aggregate(total=Sum('return_qr'))['total'] or Decimal('0.00')
+    
     context = {
         'hotel': hotel,
         'today': today,
@@ -239,7 +227,10 @@ def dashboard(request):
         'stats': {
             'today': {
                 'bookings': today_bookings.count(),
-                'revenue': today_bookings.aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00'),
+                'revenue': today_revenue,  # Now includes extra income and subtracts expenses
+                'booking_revenue': today_booking_revenue,  # Just booking revenue
+                'extra_income': today_extra_income,
+                'expenses': today_expenses,
                 'cash': today_bookings.filter(payment_mode='CASH').aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00'),
                 'qr_due': due_to_oyo
             },
@@ -253,17 +244,27 @@ def dashboard(request):
             'oyo_percentage': round(oyo_percentage, 1),
         },
         'qr_stats': {
-            'total_qr_amount': total_qr_amount,
-            'total_booking_amount': total_booking_amount,
-            'due_to_oyo': due_to_oyo,
-            'qr_bookings_count': qr_bookings.count()
+            'total_qr_amount': total_qr_amount,  # Only actual QR amounts
+            'total_booking_amount': qr_bookings.aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00'),
+            'due_to_oyo': due_to_oyo,  # Can be negative when OYO owes you
+            'amount_oyo_owes': excess_amount,  # Positive amount when due_to_oyo is negative
+            'qr_bookings_count': qr_bookings.count(),
+            'not_in_qr_amount': not_in_qr_amount,
+            'not_in_qr_count': not_in_qr_bookings.count(),
+            'prepaid_booking_amount': prepaid_booking_amount,
+            'prepaid_count': prepaid_count,
+            'prepaid_return_qr': prepaid_return_qr,
+            'prepaid_due': prepaid_due,
+            'non_prepaid_due': non_prepaid_due,
+            'total_oyo_due': total_oyo_due,
+            'initial_due': due_to_oyo,  # Same as due_to_oyo now
+            'excess_amount': excess_amount,  # Same as amount_oyo_owes, kept for backward compatibility
         },
         'pending_qr': qr_bookings.filter(return_qr__lt=F('booking_amount')).count(),
-        'monthly_data': months_data,
-        'daily_data': daily_data,
         'recent_bookings': recent_bookings,
         'booking_modes': booking_modes,
-        'previous_reports': previous_reports,
+        'expenses': expenses,
+        'extra_income': extra_income,
     }
     
     return render(request, 'dashboard.html', context)
@@ -298,12 +299,15 @@ def booking(request):
         return redirect('dashboard')
     
     if request.method == 'POST':
-        # This is only for creating new bookings now
         form = BookingForm(request.POST)
             
         if form.is_valid():
             booking = form.save(commit=False)
             booking.hotel = hotel
+            
+           
+            
+                
             booking.save()
             messages.success(request, f'Booking {booking.booking_id} created successfully!')
             return redirect('booking')
@@ -312,12 +316,53 @@ def booking(request):
     else:
         form = BookingForm()
     
+    # Get filter parameters
+    search_query = request.GET.get('search', '')
+    date_filter = request.GET.get('date_filter', '')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+    
     # Get all bookings for this hotel
-    bookings = Booking.objects.filter(hotel=hotel).order_by('-created_at')
+    bookings = Booking.objects.filter(hotel=hotel)
+    
+    # Apply search filter
+    if search_query:
+        bookings = bookings.filter(booking_id__icontains=search_query)
+    
+    # Apply date filters
+    if date_filter:
+        today = timezone.now().date()
+        if date_filter == 'today':
+            bookings = bookings.filter(created_at__date=today)
+        elif date_filter == 'yesterday':
+            yesterday = today - timedelta(days=1)
+            bookings = bookings.filter(created_at__date=yesterday)
+        elif date_filter == 'this_week':
+            start_of_week = today - timedelta(days=today.weekday())
+            bookings = bookings.filter(created_at__date__gte=start_of_week)
+        elif date_filter == 'this_month':
+            bookings = bookings.filter(created_at__year=today.year, created_at__month=today.month)
+    
+    # Apply custom date range filter
+    if start_date and end_date:
+        try:
+            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+            bookings = bookings.filter(created_at__date__range=[start_date_obj, end_date_obj])
+        except ValueError:
+            pass
+    
+    # Order and paginate
+    bookings = bookings.order_by('-created_at')
+    
+    # Pagination - 20 bookings per page
+    paginator = Paginator(bookings, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     
     # Prepare booking data for JavaScript
     booking_data = {}
-    for booking in bookings:
+    for booking in page_obj:
         booking_data[booking.id] = {
             'booking_id': booking.booking_id,
             'guest_name': booking.guest_name,
@@ -328,14 +373,16 @@ def booking(request):
             'not_in_qr': booking.not_in_qr,
             'extra_income': float(booking.extra_income) if booking.extra_income else 0,
         }
-   
     
     return render(request, "bookings.html", {
         'form': form,
-        'bookings': bookings,
+        'page_obj': page_obj,
         'hotel': hotel,
         'booking_data_json': json.dumps(booking_data),
-        # Add this to context
+        'search_query': search_query,
+        'date_filter': date_filter,
+        'start_date': start_date,
+        'end_date': end_date,
     })
 @login_required
 @require_POST
