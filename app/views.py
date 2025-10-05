@@ -116,10 +116,13 @@ def dashboard(request):
         created_at__date__lte=end_date
     )
     
-    # QR Analysis for filtered period - EXCLUDE bookings not in QR
+    # QR Analysis for ALL booking modes (OYO, TA, OTA, WALK_IN) - all part of OYO ecosystem
+    oyo_ecosystem_modes = ['OYO', 'TA', 'OTA', 'WALK_IN']
+    
+    # Get all QR bookings for OYO ecosystem (exclude PREPAID from QR amount calculation)
     qr_bookings = Booking.objects.filter(
         hotel=hotel,
-        booking_mode='OYO',
+        booking_mode__in=oyo_ecosystem_modes,
         not_in_qr=False  # Only include bookings that are in QR
     ).filter(
         created_at__date__gte=start_date,
@@ -131,7 +134,10 @@ def dashboard(request):
     prepaid_qr_bookings = qr_bookings.filter(payment_mode='PREPAID')
     
     # Calculate QR amounts - Only actual QR return amounts, not excess
-    total_qr_amount = non_prepaid_qr_bookings.aggregate(total=Sum('return_qr'))['total'] or Decimal('0.00')
+    total_qr_returned = non_prepaid_qr_bookings.aggregate(total=Sum('return_qr'))['total'] or Decimal('0.00')
+    
+    # Calculate total QR booking amount - ONLY NON-PREPAID bookings count towards QR Amount
+    total_qr_booking_amount = non_prepaid_qr_bookings.aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00')
     
     # Calculate due amounts separately for prepaid and non-prepaid
     non_prepaid_due = non_prepaid_qr_bookings.aggregate(
@@ -142,23 +148,38 @@ def dashboard(request):
         total=Sum(F('booking_amount') - F('return_qr'))
     )['total'] or Decimal('0.00')
     
-    # Total due from OYO bookings (before subtracting not_in_qr)
+    # Total due from OYO ecosystem bookings (before adjusting for not_in_qr)
     total_oyo_due = non_prepaid_due + prepaid_due
     
-    # Get bookings NOT in QR for the filtered period
+    # Get bookings NOT in QR for OYO ecosystem
     not_in_qr_bookings = Booking.objects.filter(
         hotel=hotel,
-        booking_mode='OYO',
+        booking_mode__in=oyo_ecosystem_modes,
         not_in_qr=True
     ).filter(
         created_at__date__gte=start_date,
         created_at__date__lte=end_date
     )
     
-    not_in_qr_amount = not_in_qr_bookings.aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00')
+    # Get hotel's QR amount (from Hotel model)
+    hotel_qr_amount = Decimal(str(hotel.qr_amount or 0))
     
-    # Calculate final due to OYO - can be negative
-    due_to_oyo = total_oyo_due - not_in_qr_amount
+    # Calculate not_in_qr adjustments
+    # For each not_in_qr booking: difference = booking_amount - hotel_qr_amount
+    not_in_qr_total_booking = not_in_qr_bookings.aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00')
+    not_in_qr_count = not_in_qr_bookings.count()
+    
+    # Total QR that would have been received for these bookings
+    not_in_qr_expected_qr = hotel_qr_amount * not_in_qr_count
+    
+    # The difference (amount over the expected QR)
+    not_in_qr_adjustment = not_in_qr_total_booking - not_in_qr_expected_qr
+    
+    # Add this adjustment to total QR returned amount (as if you received this extra)
+    adjusted_qr_returned = total_qr_returned + not_in_qr_adjustment
+    
+    # Subtract this adjustment from due to OYO
+    due_to_oyo = total_oyo_due - not_in_qr_adjustment
     
     # Track if there's excess (negative due means OYO owes you money)
     excess_amount = abs(due_to_oyo) if due_to_oyo < 0 else Decimal('0.00')
@@ -181,6 +202,9 @@ def dashboard(request):
     total_revenue = (filtered_bookings.aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00')) + extra_income
     net_profit = total_revenue - expenses
     
+    # Calculate total rooms used in filtered period
+    total_rooms_used = filtered_bookings.aggregate(total=Sum('number_of_rooms'))['total'] or 0
+    
     # Recent bookings (all time, not filtered)
     recent_bookings = Booking.objects.filter(hotel=hotel).order_by('-created_at')[:10]
     
@@ -190,10 +214,21 @@ def dashboard(request):
         total_revenue=Sum('booking_amount')
     )
     
-    # Calculate OYO percentage for filtered period
-    oyo_count = filtered_bookings.filter(booking_mode='OYO').count()
+    # Calculate booking mode percentages for filtered period
     total_bookings_count = filtered_bookings.count()
+    
+    # Calculate each booking mode percentage
+    oyo_count = filtered_bookings.filter(booking_mode='OYO').count()
     oyo_percentage = (oyo_count / total_bookings_count * 100) if total_bookings_count > 0 else 0
+    
+    ta_count = filtered_bookings.filter(booking_mode='TA').count()
+    ta_percentage = (ta_count / total_bookings_count * 100) if total_bookings_count > 0 else 0
+    
+    ota_count = filtered_bookings.filter(booking_mode='OTA').count()
+    ota_percentage = (ota_count / total_bookings_count * 100) if total_bookings_count > 0 else 0
+    
+    walk_in_count = filtered_bookings.filter(booking_mode='WALK_IN').count()
+    walk_in_percentage = (walk_in_count / total_bookings_count * 100) if total_bookings_count > 0 else 0
     
     # Calculate revenue change compared to previous period of same duration
     previous_period_days = (end_date - start_date).days + 1
@@ -219,6 +254,26 @@ def dashboard(request):
     prepaid_count = prepaid_qr_bookings.count()
     prepaid_return_qr = prepaid_qr_bookings.aggregate(total=Sum('return_qr'))['total'] or Decimal('0.00')
     
+    # Calculate QR efficiency percentage (for OYO ecosystem bookings)
+    total_oyo_ecosystem_bookings = filtered_bookings.filter(booking_mode__in=oyo_ecosystem_modes).count()
+    if total_oyo_ecosystem_bookings > 0:
+        qr_efficiency_percentage = round((qr_bookings.count() / total_oyo_ecosystem_bookings) * 100, 1)
+    else:
+        qr_efficiency_percentage = 0
+
+    # Calculate QR stats by booking mode (exclude prepaid from QR amount)
+    qr_stats_by_mode = {}
+    for mode in oyo_ecosystem_modes:
+        mode_qr_bookings = non_prepaid_qr_bookings.filter(booking_mode=mode)
+        mode_not_in_qr = not_in_qr_bookings.filter(booking_mode=mode)
+        
+        qr_stats_by_mode[mode] = {
+            'qr_count': mode_qr_bookings.count(),
+            'qr_amount': mode_qr_bookings.aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00'),
+            'not_in_qr_count': mode_not_in_qr.count(),
+            'not_in_qr_amount': mode_not_in_qr.aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00'),
+        }
+
     context = {
         'hotel': hotel,
         'today': today,
@@ -227,8 +282,8 @@ def dashboard(request):
         'stats': {
             'today': {
                 'bookings': today_bookings.count(),
-                'revenue': today_revenue,  # Now includes extra income and subtracts expenses
-                'booking_revenue': today_booking_revenue,  # Just booking revenue
+                'revenue': today_revenue,
+                'booking_revenue': today_booking_revenue,
                 'extra_income': today_extra_income,
                 'expenses': today_expenses,
                 'cash': today_bookings.filter(payment_mode='CASH').aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00'),
@@ -238,29 +293,38 @@ def dashboard(request):
                 'total_bookings': filtered_bookings.count(),
                 'total_revenue': total_revenue,
                 'total_expenses': expenses,
-                'net_profit': net_profit
+                'net_profit': net_profit,
+                'total_rooms_used': total_rooms_used
             },
             'revenue_change': round(revenue_change, 1),
             'oyo_percentage': round(oyo_percentage, 1),
+            'ta_percentage': round(ta_percentage, 1),
+            'ota_percentage': round(ota_percentage, 1),
+            'walk_in_percentage': round(walk_in_percentage, 1),
         },
         'qr_stats': {
-            'total_qr_amount': total_qr_amount,  # Only actual QR amounts
-            'total_booking_amount': qr_bookings.aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00'),
-            'due_to_oyo': due_to_oyo,  # Can be negative when OYO owes you
+            'total_qr_amount': total_qr_booking_amount,  # Total booking amount for NON-PREPAID OYO ecosystem QR bookings only
+            'total_qr_returned': adjusted_qr_returned,   # Actual QR returned amount
+            'total_booking_amount': non_prepaid_qr_bookings.aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00'),
+            'due_to_oyo': due_to_oyo,  # Adjusted due to OYO (includes prepaid due, can be negative when OYO owes you)
             'amount_oyo_owes': excess_amount,  # Positive amount when due_to_oyo is negative
-            'qr_bookings_count': qr_bookings.count(),
-            'not_in_qr_amount': not_in_qr_amount,
-            'not_in_qr_count': not_in_qr_bookings.count(),
+            'qr_bookings_count': non_prepaid_qr_bookings.count(),  # Only non-prepaid bookings in QR count
+            'not_in_qr_amount': not_in_qr_total_booking,
+            'not_in_qr_count': not_in_qr_count,
+            'not_in_qr_adjustment': not_in_qr_adjustment,
+            'not_in_qr_expected_qr': not_in_qr_expected_qr,
             'prepaid_booking_amount': prepaid_booking_amount,
             'prepaid_count': prepaid_count,
             'prepaid_return_qr': prepaid_return_qr,
             'prepaid_due': prepaid_due,
             'non_prepaid_due': non_prepaid_due,
             'total_oyo_due': total_oyo_due,
-            'initial_due': due_to_oyo,  # Same as due_to_oyo now
-            'excess_amount': excess_amount,  # Same as amount_oyo_owes, kept for backward compatibility
+            'initial_due': total_oyo_due,
+            'excess_amount': excess_amount,
+            'qr_efficiency_percentage': qr_efficiency_percentage,
+            'by_mode': qr_stats_by_mode,  # QR stats broken down by booking mode (non-prepaid only)
         },
-        'pending_qr': qr_bookings.filter(return_qr__lt=F('booking_amount')).count(),
+        'pending_qr': non_prepaid_qr_bookings.filter(return_qr__lt=F('booking_amount')).count(),
         'recent_bookings': recent_bookings,
         'booking_modes': booking_modes,
         'expenses': expenses,
@@ -305,9 +369,14 @@ def booking(request):
             booking = form.save(commit=False)
             booking.hotel = hotel
             
-           
+            # Auto-calculate return_qr if not_in_qr is not checked
+            if not booking.not_in_qr:
+                # Calculate due: number_of_rooms * hotel_qr_amount
+                calculated_due = booking.number_of_rooms * hotel.qr_amount
+                actual_due = min(calculated_due, booking.booking_amount)
+                # Calculate QR return: booking amount - due amount
+                booking.return_qr = max(Decimal('0.00'), booking.booking_amount - actual_due)
             
-                
             booking.save()
             messages.success(request, f'Booking {booking.booking_id} created successfully!')
             return redirect('booking')
@@ -327,7 +396,10 @@ def booking(request):
     
     # Apply search filter
     if search_query:
-        bookings = bookings.filter(booking_id__icontains=search_query)
+        bookings = bookings.filter(
+            models.Q(booking_id__icontains=search_query) |
+            models.Q(guest_name__icontains=search_query)
+        )
     
     # Apply date filters
     if date_filter:
@@ -342,6 +414,14 @@ def booking(request):
             bookings = bookings.filter(created_at__date__gte=start_of_week)
         elif date_filter == 'this_month':
             bookings = bookings.filter(created_at__year=today.year, created_at__month=today.month)
+        elif date_filter == 'last_month':
+            first_day_of_current_month = today.replace(day=1)
+            last_day_of_previous_month = first_day_of_current_month - timedelta(days=1)
+            first_day_of_previous_month = last_day_of_previous_month.replace(day=1)
+            bookings = bookings.filter(
+                created_at__date__gte=first_day_of_previous_month,
+                created_at__date__lte=last_day_of_previous_month
+            )
     
     # Apply custom date range filter
     if start_date and end_date:
@@ -350,7 +430,13 @@ def booking(request):
             end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
             bookings = bookings.filter(created_at__date__range=[start_date_obj, end_date_obj])
         except ValueError:
-            pass
+            messages.error(request, "Invalid date format. Please use YYYY-MM-DD.")
+    
+    # Calculate summary statistics
+    total_bookings = bookings.count()
+    total_amount = sum(booking.booking_amount for booking in bookings)
+    total_due = sum(booking.due_to_oyo for booking in bookings)
+    total_qr_return = sum(booking.return_qr for booking in bookings)
     
     # Order and paginate
     bookings = bookings.order_by('-created_at')
@@ -362,19 +448,21 @@ def booking(request):
     
     # Prepare booking data for JavaScript
     booking_data = {}
-    for booking in page_obj:
+    for booking in bookings:  # Use all bookings for edit functionality
         booking_data[booking.id] = {
             'booking_id': booking.booking_id,
             'guest_name': booking.guest_name,
             'booking_mode': booking.booking_mode,
             'payment_mode': booking.payment_mode,
+            'number_of_rooms': booking.number_of_rooms,
             'booking_amount': float(booking.booking_amount),
             'return_qr': float(booking.return_qr),
             'not_in_qr': booking.not_in_qr,
             'extra_income': float(booking.extra_income) if booking.extra_income else 0,
+            'created_at': booking.created_at.strftime('%Y-%m-%d %H:%M:%S'),
         }
     
-    return render(request, "bookings.html", {
+    context = {
         'form': form,
         'page_obj': page_obj,
         'hotel': hotel,
@@ -383,35 +471,63 @@ def booking(request):
         'date_filter': date_filter,
         'start_date': start_date,
         'end_date': end_date,
-    })
+        'total_bookings': total_bookings,
+        'total_amount': total_amount,
+        'total_due': total_due,
+        'total_qr_return': total_qr_return,
+    }
+    
+    return render(request, "bookings.html", context)
+
 @login_required
 @require_POST
 def update_booking(request):
     try:
         hotel = Hotel.objects.get(user=request.user)
         
-        # Get the numeric ID from the form, not the booking_id string
-        booking_id = request.POST.get('id')  # Changed from 'booking_id' to 'id'
+        # Get the numeric ID from the form
+        booking_id = request.POST.get('id')
+        if not booking_id:
+            messages.error(request, "Booking ID is required.")
+            return redirect('booking')
+            
         booking_instance = get_object_or_404(Booking, id=booking_id, hotel=hotel)
         
+        # Create form with instance and POST data
         form = BookingForm(request.POST, instance=booking_instance)
         if form.is_valid():
-            form.save()
-            messages.success(request, f'Booking {booking_instance.booking_id} updated successfully!')
+            booking = form.save(commit=False)
+            booking.hotel = hotel  # Ensure hotel is set
+            
+            # Auto-calculate return_qr if not_in_qr is not checked
+            if not booking.not_in_qr:
+                # Calculate due: number_of_rooms * hotel_qr_amount
+                calculated_due = booking.number_of_rooms * hotel.qr_amount
+                actual_due = min(calculated_due, booking.booking_amount)
+                # Calculate QR return: booking amount - due amount
+                booking.return_qr = max(Decimal('0.00'), booking.booking_amount - actual_due)
+            
+            booking.save()
+            messages.success(request, f'Booking {booking.booking_id} updated successfully!')
             return redirect('booking')
         else:
-            # For debugging, print form errors
-            print(form.errors)
-            messages.error(request, 'Please correct the errors below.')
+            # Log form errors for debugging
+            print("Form errors:", form.errors)
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
             return redirect('booking')
             
     except Hotel.DoesNotExist:
-        messages.error(request, "You don't have permission to edit this booking.")
+        messages.error(request, "You don't have a hotel associated with your account.")
         return redirect('booking')
     except ValueError as e:
-        # Handle the case where ID is not a number
-        messages.error(request, "Invalid booking ID format.")
+        messages.error(request, f"Invalid booking ID: {str(e)}")
         return redirect('booking')
+    except Exception as e:
+        messages.error(request, f"An error occurred while updating the booking: {str(e)}")
+        return redirect('booking')
+
 @login_required
 def delete_booking(request, booking_id):
     try:
@@ -422,11 +538,10 @@ def delete_booking(request, booking_id):
         messages.success(request, f'Booking {booking_id_str} deleted successfully!')
     except Hotel.DoesNotExist:
         messages.error(request, "You don't have permission to delete this booking.")
+    except Exception as e:
+        messages.error(request, f"An error occurred while deleting the booking: {str(e)}")
     
     return redirect('booking')
-
-
-
 @login_required
 def extra_income(request):
     try:

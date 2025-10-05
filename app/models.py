@@ -26,6 +26,7 @@ class Booking(models.Model):
     """Individual booking entries"""
     BOOKING_MODE_CHOICES = [
         ('OYO', 'OYO'),
+        ('TA', 'TA'),
         ('OTA', 'OTA'),
         ('WALK_IN', 'Walk-in'),
     ]
@@ -35,31 +36,39 @@ class Booking(models.Model):
         ('UPI', 'UPI'),
         ('PREPAID', 'Prepaid'),
     ]
-    hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE,null=True,blank=True)
+    
+    hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, null=True, blank=True)
     booking_id = models.CharField(max_length=100)
     guest_name = models.CharField(max_length=200)
     booking_mode = models.CharField(max_length=10, choices=BOOKING_MODE_CHOICES)
     payment_mode = models.CharField(max_length=10, choices=PAYMENT_MODE_CHOICES)
+    number_of_rooms = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
     booking_amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     return_qr = models.DecimalField(max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(Decimal('0.00'))])
     created_at = models.DateTimeField(auto_now_add=True)
-    extra_income=models.CharField(max_length=10,null=True,blank=True)
-    not_in_qr=models.BooleanField(default=False)
+    extra_income = models.CharField(max_length=10, null=True, blank=True)
+    not_in_qr = models.BooleanField(default=False)
     
     def __str__(self):
         return f"{self.booking_id} - {self.guest_name}"
     
     @property
     def due_to_oyo(self):
-        if self.booking_mode == 'OYO':
-            return self.booking_amount - self.return_qr
-        return 0
+        """Calculate due amount for ALL booking types based on number of rooms"""
+        if self.not_in_qr:
+            return Decimal('0.00')
+        
+        # Calculate due as: number_of_rooms * hotel_qr_amount
+        if hasattr(self, 'hotel') and self.hotel and self.hotel.qr_amount:
+            due_amount = self.number_of_rooms * self.hotel.qr_amount
+            # Ensure due amount doesn't exceed booking amount
+            return min(due_amount, self.booking_amount)
+        return Decimal('0.00')
     
     class Meta:
         verbose_name = "Booking"
         verbose_name_plural = "Bookings"
         ordering = ['-created_at']
-
 class ExtraIncome(models.Model):
     """Extra income sources"""
     INCOME_SOURCE_CHOICES = [

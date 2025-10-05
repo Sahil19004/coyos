@@ -418,152 +418,165 @@
     </div>
 
     <!-- Add Booking Modal -->
-    <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="bookingModalLabel">Add New Booking</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form method="POST" action="{% url 'booking' %}">
-                    {% csrf_token %}
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="booking_id" class="form-label">Booking ID</label>
-                                {{ form.booking_id }}
-                                {% if form.booking_id.errors %}
-                                <div class="text-danger">{{ form.booking_id.errors }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="guest_name" class="form-label">Guest Name</label>
-                                {{ form.guest_name }}
-                                {% if form.guest_name.errors %}
-                                <div class="text-danger">{{ form.guest_name.errors }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="booking_mode" class="form-label">Booking Mode</label>
-                                {{ form.booking_mode }}
-                                {% if form.booking_mode.errors %}
-                                <div class="text-danger">{{ form.booking_mode.errors }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="payment_mode" class="form-label">Payment Mode</label>
-                                {{ form.payment_mode }}
-                                {% if form.payment_mode.errors %}
-                                <div class="text-danger">{{ form.payment_mode.errors }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="booking_amount" class="form-label">Booking Amount (₹)</label>
-                                {{ form.booking_amount }}
-                                {% if form.booking_amount.errors %}
-                                <div class="text-danger">{{ form.booking_amount.errors }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="return_qr" class="form-label">QR Return Amount (₹)</label>
-                                {{ form.return_qr }}
-                                {% if form.return_qr.errors %}
-                                <div class="text-danger">{{ form.return_qr.errors }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-12 mb-3">
-                                <div class="form-check">
-                                    {{ form.not_in_qr }}
-                                    <label class="form-check-label" for="not_in_qr">
-                                        Not in QR
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-md-12">
-                                <div id="due-display" class="alert alert-info"></div>
+   <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bookingModalLabel">Add New Booking</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'booking' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="booking_id" class="form-label">Booking ID</label>
+                            {{ form.booking_id }}
+                            {% if form.booking_id.errors %}
+                            <div class="text-danger">{{ form.booking_id.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="guest_name" class="form-label">Guest Name</label>
+                            {{ form.guest_name }}
+                            {% if form.guest_name.errors %}
+                            <div class="text-danger">{{ form.guest_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="booking_mode" class="form-label">Booking Mode</label>
+                            {{ form.booking_mode }}
+                            {% if form.booking_mode.errors %}
+                            <div class="text-danger">{{ form.booking_mode.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="payment_mode" class="form-label">Payment Mode</label>
+                            {{ form.payment_mode }}
+                            {% if form.payment_mode.errors %}
+                            <div class="text-danger">{{ form.payment_mode.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <!-- NEW: Number of Rooms Field -->
+                        <div class="col-md-6 mb-3">
+                            <label for="number_of_rooms" class="form-label">Number of Rooms</label>
+                            {{ form.number_of_rooms }}
+                            {% if form.number_of_rooms.errors %}
+                            <div class="text-danger">{{ form.number_of_rooms.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="booking_amount" class="form-label">Booking Amount (₹)</label>
+                            {{ form.booking_amount }}
+                            {% if form.booking_amount.errors %}
+                            <div class="text-danger">{{ form.booking_amount.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="return_qr" class="form-label">QR Return Amount (₹)</label>
+                            {{ form.return_qr }}
+                            {% if form.return_qr.errors %}
+                            <div class="text-danger">{{ form.return_qr.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                {{ form.not_in_qr }}
+                                <label class="form-check-label" for="not_in_qr">
+                                    Not in QR
+                                </label>
                             </div>
                         </div>
+                        <div class="col-md-12">
+                            <div id="due-display" class="alert alert-info"></div>
+                        </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Save Booking</button>
-                    </div>
-                </form>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Booking</button>
+                </div>
+            </form>
         </div>
     </div>
-
+</div>
     <!-- Edit Booking Modal -->
-    <div class="modal fade" id="editBookingModal" tabindex="-1" aria-labelledby="editBookingModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editBookingModalLabel">Edit Booking</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form method="POST" action="{% url 'update_booking' %}" id="editBookingForm">
-                    {% csrf_token %}
-                    <input type="hidden" name="id" id="edit_booking_id">
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_booking_id_field" class="form-label">Booking ID</label>
-                                <input type="text" class="form-control" id="edit_booking_id_field" name="booking_id" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_guest_name" class="form-label">Guest Name</label>
-                                <input type="text" class="form-control" id="edit_guest_name" name="guest_name" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_booking_mode" class="form-label">Booking Mode</label>
-                                <select class="form-control" id="edit_booking_mode" name="booking_mode" required>
-                                    <option value="OYO">OYO</option>
-                                    <option value="OTA">OTA</option>
-                                    <option value="WALK_IN">Walk-in</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_payment_mode" class="form-label">Payment Mode</label>
-                                <select class="form-control" id="edit_payment_mode" name="payment_mode" required>
-                                    <option value="CASH">Cash</option>
-                                    <option value="UPI">UPI</option>
-                                    <option value="PREPAID">Prepaid</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_booking_amount" class="form-label">Booking Amount (₹)</label>
-                                <input type="number" step="0.01" class="form-control" id="edit_booking_amount" name="booking_amount" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_return_qr" class="form-label">QR Return Amount (₹)</label>
-                                <input type="number" step="0.01" class="form-control" id="edit_return_qr" name="return_qr" required>
-                            </div>
-                            <div class="col-md-12 mb-3">
-                                <div class="form-check">
-                                    <input type="checkbox" class="form-check-input" id="edit_not_in_qr" name="not_in_qr">
-                                    <label class="form-check-label" for="edit_not_in_qr">
-                                        Not in QR
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-md-12">
-                                <div id="edit-due-display" class="alert alert-info"></div>
+   <div class="modal fade" id="editBookingModal" tabindex="-1" aria-labelledby="editBookingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editBookingModalLabel">Edit Booking</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'update_booking' %}" id="editBookingForm">
+                {% csrf_token %}
+                <input type="hidden" name="id" id="edit_booking_id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_booking_id_field" class="form-label">Booking ID</label>
+                            <input type="text" class="form-control" id="edit_booking_id_field" name="booking_id" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_guest_name" class="form-label">Guest Name</label>
+                            <input type="text" class="form-control" id="edit_guest_name" name="guest_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_booking_mode" class="form-label">Booking Mode</label>
+                            <select class="form-control" id="edit_booking_mode" name="booking_mode" required>
+                                <option value="OYO">OYO</option>
+                                <option value="TA">TA</option>
+                                <option value="OTA">OTA</option>
+                                <option value="WALK_IN">Walk-in</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_payment_mode" class="form-label">Payment Mode</label>
+                            <select class="form-control" id="edit_payment_mode" name="payment_mode" required>
+                                <option value="CASH">Cash</option>
+                                <option value="UPI">UPI</option>
+                                <option value="PREPAID">Prepaid</option>
+                            </select>
+                        </div>
+                        <!-- NEW: Number of Rooms Field -->
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_number_of_rooms" class="form-label">Number of Rooms</label>
+                            <input type="number" class="form-control" id="edit_number_of_rooms" name="number_of_rooms" min="1" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_booking_amount" class="form-label">Booking Amount (₹)</label>
+                            <input type="number" step="0.01" class="form-control" id="edit_booking_amount" name="booking_amount" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_return_qr" class="form-label">QR Return Amount (₹)</label>
+                            <input type="number" step="0.01" class="form-control" id="edit_return_qr" name="return_qr" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="edit_not_in_qr" name="not_in_qr">
+                                <label class="form-check-label" for="edit_not_in_qr">
+                                    Not in QR
+                                </label>
                             </div>
                         </div>
+                        <div class="col-md-12">
+                            <div id="edit-due-display" class="alert alert-info"></div>
+                        </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Update Booking</button>
-                    </div>
-                </form>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Update Booking</button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-  <script>
+ <script>
     const bookingData = {{ booking_data_json|safe }};
     const hotelQrAmount = {{ hotel.qr_amount|default:0 }};
     
@@ -575,45 +588,51 @@
         });
     }, 5000);
     
-    // Calculate due amount and QR return
-    function calculateDueAndQR(bookingMode, bookingAmount, returnQr, notInQr, displayElement) {
+    // Calculate due amount and QR return for ALL booking modes
+    function calculateDueAndQR(bookingMode, numberOfRooms, bookingAmount, returnQr, notInQr, displayElement) {
+        const rooms = parseInt(numberOfRooms) || 1;
         const amount = parseFloat(bookingAmount) || 0;
         const qr = parseFloat(returnQr) || 0;
         
-        if (bookingMode === 'OYO') {
-            if (notInQr) {
-                // If "Not in QR" is checked, no due to OYO and QR return is 0
-                displayElement.textContent = 'Not in QR - Due to OYO: ₹0.00 | QR Return: ₹0.00';
-                displayElement.className = 'alert alert-info';
-            } else {
-                // Calculate QR return: booking amount - hotel QR amount
-                const calculatedQrReturn = Math.max(0, amount - hotelQrAmount);
-                const due = amount - calculatedQrReturn;
-                displayElement.textContent = 'Due to OYO: ₹' + due.toFixed(2) + ' | QR Return: ₹' + calculatedQrReturn.toFixed(2);
-                
-                if (due > 0) {
-                    displayElement.className = 'alert alert-warning';
-                } else {
-                    displayElement.className = 'alert alert-success';
-                }
-            }
-        } else {
-            displayElement.textContent = 'No amount due to OYO for non-OYO bookings';
+        if (notInQr) {
+            // If "Not in QR" is checked, no due and QR return is 0
+            displayElement.textContent = 'Not in QR - Due: ₹0.00 | QR Return: ₹0.00';
             displayElement.className = 'alert alert-info';
+        } else {
+            // Calculate due for ALL booking modes: number_of_rooms * hotel_qr_amount
+            const calculatedDue = rooms * hotelQrAmount;
+            const actualDue = Math.min(calculatedDue, amount); // Don't exceed booking amount
+            
+            // Calculate QR return: booking amount - due amount
+            const calculatedQrReturn = Math.max(0, amount - actualDue);
+            
+            displayElement.textContent = `Due: ₹${actualDue.toFixed(2)} | QR Return: ₹${calculatedQrReturn.toFixed(2)} (${rooms} room(s) × ₹${hotelQrAmount})`;
+            
+            if (actualDue > 0) {
+                displayElement.className = 'alert alert-warning';
+            } else {
+                displayElement.className = 'alert alert-success';
+            }
         }
     }
     
-    // Update QR return field based on booking amount and not_in_qr checkbox
-    function updateQRReturn(bookingAmountInput, returnQrInput, notInQrCheckbox, bookingMode) {
+    // Update QR return field based on booking amount, number of rooms and not_in_qr checkbox
+    function updateQRReturn(bookingAmountInput, numberOfRoomsInput, returnQrInput, notInQrCheckbox) {
         const amount = parseFloat(bookingAmountInput.value) || 0;
+        const rooms = parseInt(numberOfRoomsInput.value) || 1;
         
-        if (notInQrCheckbox.checked || bookingMode !== 'OYO') {
+        if (notInQrCheckbox.checked) {
             returnQrInput.value = '0.00';
             returnQrInput.readOnly = true;
             returnQrInput.style.backgroundColor = '#f8f9fa';
         } else {
-            // Calculate QR return: booking amount - hotel QR amount
-            const calculatedQrReturn = Math.max(0, amount - hotelQrAmount);
+            // Calculate due: number_of_rooms * hotel_qr_amount
+            const calculatedDue = rooms * hotelQrAmount;
+            const actualDue = Math.min(calculatedDue, amount);
+            
+            // Calculate QR return: booking amount - due amount
+            const calculatedQrReturn = Math.max(0, amount - actualDue);
+            
             returnQrInput.value = calculatedQrReturn.toFixed(2);
             returnQrInput.readOnly = false;
             returnQrInput.style.backgroundColor = '';
@@ -623,23 +642,25 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Add booking modal calculations
         const bookingAmount = document.getElementById('id_booking_amount');
+        const numberOfRooms = document.getElementById('id_number_of_rooms');
         const returnQr = document.getElementById('id_return_qr');
         const bookingMode = document.getElementById('id_booking_mode');
         const notInQr = document.getElementById('id_not_in_qr');
         const dueDisplay = document.getElementById('due-display');
         
-        if (bookingAmount && returnQr && bookingMode && notInQr && dueDisplay) {
+        if (bookingAmount && numberOfRooms && returnQr && bookingMode && notInQr && dueDisplay) {
             // Update calculations when any field changes
             function updateAddBookingCalculations() {
-                updateQRReturn(bookingAmount, returnQr, notInQr, bookingMode.value);
-                calculateDueAndQR(bookingMode.value, bookingAmount.value, returnQr.value, notInQr.checked, dueDisplay);
+                updateQRReturn(bookingAmount, numberOfRooms, returnQr, notInQr);
+                calculateDueAndQR(bookingMode.value, numberOfRooms.value, bookingAmount.value, returnQr.value, notInQr.checked, dueDisplay);
             }
             
             bookingAmount.addEventListener('input', updateAddBookingCalculations);
+            numberOfRooms.addEventListener('input', updateAddBookingCalculations);
             returnQr.addEventListener('input', function() {
                 // Only allow manual QR input if not in QR is unchecked
-                if (!notInQr.checked && bookingMode.value === 'OYO') {
-                    calculateDueAndQR(bookingMode.value, bookingAmount.value, returnQr.value, notInQr.checked, dueDisplay);
+                if (!notInQr.checked) {
+                    calculateDueAndQR(bookingMode.value, numberOfRooms.value, bookingAmount.value, returnQr.value, notInQr.checked, dueDisplay);
                 }
             });
             bookingMode.addEventListener('change', updateAddBookingCalculations);
@@ -651,23 +672,25 @@
         
         // Edit booking modal calculations
         const editBookingAmount = document.getElementById('edit_booking_amount');
+        const editNumberOfRooms = document.getElementById('edit_number_of_rooms');
         const editReturnQr = document.getElementById('edit_return_qr');
         const editBookingMode = document.getElementById('edit_booking_mode');
         const editNotInQr = document.getElementById('edit_not_in_qr');
         const editDueDisplay = document.getElementById('edit-due-display');
         
-        if (editBookingAmount && editReturnQr && editBookingMode && editNotInQr && editDueDisplay) {
+        if (editBookingAmount && editNumberOfRooms && editReturnQr && editBookingMode && editNotInQr && editDueDisplay) {
             // Update calculations when any field changes
             function updateEditBookingCalculations() {
-                updateQRReturn(editBookingAmount, editReturnQr, editNotInQr, editBookingMode.value);
-                calculateDueAndQR(editBookingMode.value, editBookingAmount.value, editReturnQr.value, editNotInQr.checked, editDueDisplay);
+                updateQRReturn(editBookingAmount, editNumberOfRooms, editReturnQr, editNotInQr);
+                calculateDueAndQR(editBookingMode.value, editNumberOfRooms.value, editBookingAmount.value, editReturnQr.value, editNotInQr.checked, editDueDisplay);
             }
             
             editBookingAmount.addEventListener('input', updateEditBookingCalculations);
+            editNumberOfRooms.addEventListener('input', updateEditBookingCalculations);
             editReturnQr.addEventListener('input', function() {
                 // Only allow manual QR input if not in QR is unchecked
-                if (!editNotInQr.checked && editBookingMode.value === 'OYO') {
-                    calculateDueAndQR(editBookingMode.value, editBookingAmount.value, editReturnQr.value, editNotInQr.checked, editDueDisplay);
+                if (!editNotInQr.checked) {
+                    calculateDueAndQR(editBookingMode.value, editNumberOfRooms.value, editBookingAmount.value, editReturnQr.value, editNotInQr.checked, editDueDisplay);
                 }
             });
             editBookingMode.addEventListener('change', updateEditBookingCalculations);
@@ -688,16 +711,18 @@
                     document.getElementById('edit_guest_name').value = data.guest_name;
                     document.getElementById('edit_booking_mode').value = data.booking_mode;
                     document.getElementById('edit_payment_mode').value = data.payment_mode;
+                    document.getElementById('edit_number_of_rooms').value = data.number_of_rooms;
                     document.getElementById('edit_booking_amount').value = data.booking_amount;
                     document.getElementById('edit_return_qr').value = data.return_qr;
                     document.getElementById('edit_not_in_qr').checked = data.not_in_qr;
                     
                     // Update QR field state based on not_in_qr status
-                    updateQRReturn(editBookingAmount, editReturnQr, editNotInQr, data.booking_mode);
+                    updateQRReturn(editBookingAmount, editNumberOfRooms, editReturnQr, editNotInQr);
                     
                     // Calculate due amount and QR return
                     calculateDueAndQR(
                         data.booking_mode, 
+                        data.number_of_rooms,
                         data.booking_amount, 
                         data.return_qr, 
                         data.not_in_qr, 

@@ -477,350 +477,405 @@
             </div>
             
             <!-- Main Content -->
-            <div class="main-content">
-                <!-- Mobile Toggle -->
-                <button class="btn btn-primary mobile-toggle" onclick="toggleSidebar()">
-                    <i class="fas fa-bars"></i> Menu
-                </button>
-                
-                <!-- Navbar -->
-                <nav class="navbar navbar-expand-lg navbar-custom mb-4">
-                    <div class="container-fluid">
-                        <div class="d-flex align-items-center">
-                            <span class="welcome-text">Welcome, <span class="hotel-name">{{ hotel.hotel_name }}</span></span>
+           <div class="main-content">
+    <!-- Mobile Toggle -->
+    <button class="btn btn-primary mobile-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i> Menu
+    </button>
+    
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom mb-4">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center">
+                <span class="welcome-text">Welcome, <span class="hotel-name">{{ hotel.hotel_name }}</span></span>
+            </div>
+            
+            <div class="d-flex align-items-center">
+                <span class="me-3 d-none d-sm-inline"><i class="fas fa-calendar-day text-primary"></i> <span>{{ today|date:"F d, Y" }}</span></span>
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle"></i> <span class="d-none d-md-inline">{{ request.user.username }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Date Filter Section -->
+    <div class="row mb-4 gutter-fix">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-filter text-primary"></i> Filter Data</h5>
+                    <form method="GET" action="" class="row g-3">
+                        <div class="col-md-3 col-sm-6">
+                            <label for="start_date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" 
+                                   value="{{ start_date|date:'Y-m-d' }}">
                         </div>
-                        
-                        <div class="d-flex align-items-center">
-                            <span class="me-3 d-none d-sm-inline"><i class="fas fa-calendar-day text-primary"></i> <span>{{ today|date:"F d, Y" }}</span></span>
-                            <div class="dropdown">
-                                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
-                                    <i class="fas fa-user-circle"></i> <span class="d-none d-md-inline">{{ request.user.username }}</span>
+                        <div class="col-md-3 col-sm-6">
+                            <label for="end_date" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" 
+                                   value="{{ end_date|date:'Y-m-d' }}">
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <label class="form-label">&nbsp;</label>
+                            <div>
+                                <button type="submit" class="btn btn-primary me-2">
+                                    <i class="fas fa-search"></i> Apply Filter
                                 </button>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a></li>
-                                    <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Settings</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </nav>
-
-                <!-- Date Filter Section -->
-                <div class="row mb-4 gutter-fix">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title"><i class="fas fa-filter text-primary"></i> Filter Data</h5>
-                                <form method="GET" action="" class="row g-3">
-                                    <div class="col-md-3 col-sm-6">
-                                        <label for="start_date" class="form-label">Start Date</label>
-                                        <input type="date" class="form-control" id="start_date" name="start_date" 
-                                               value="{{ start_date|date:'Y-m-d' }}">
-                                    </div>
-                                    <div class="col-md-3 col-sm-6">
-                                        <label for="end_date" class="form-label">End Date</label>
-                                        <input type="date" class="form-control" id="end_date" name="end_date" 
-                                               value="{{ end_date|date:'Y-m-d' }}">
-                                    </div>
-                                    <div class="col-md-3 col-sm-6">
-                                        <label class="form-label">&nbsp;</label>
-                                        <div>
-                                            <button type="submit" class="btn btn-primary me-2">
-                                                <i class="fas fa-search"></i> Apply Filter
-                                            </button>
-                                            <a href="{% url 'dashboard' %}" class="btn btn-secondary">
-                                                <i class="fas fa-sync"></i> Reset
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3 col-sm-6">
-                                        <div class="alert alert-info small mb-0">
-                                            <i class="fas fa-info-circle"></i>
-                                            Showing data from {{ start_date|date:"M d, Y" }} to {{ end_date|date:"M d, Y" }}
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Stats Overview -->
-                <div class="row mb-4 gutter-fix">
-                    <div class="col-12">
-                        <h4 class="mb-3"><i class="fas fa-chart-bar text-primary"></i> Dashboard Overview</h4>
-                    </div>
-                    
-                    <!-- Today's Stats -->
-                    <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
-                        <div class="card stat-card today dashboard-card">
-                            <div class="card-body">
-                                <h6 class="card-subtitle mb-2 text-muted">Today's Bookings</h6>
-                                <h3 class="card-title text-success">{{ stats.today.bookings }}</h3>
-                                <p class="card-text small">₹{{ stats.today.revenue|floatformat:0 }}</p>
-                                <i class="fas fa-calendar-day card-icon text-success"></i>
-                            </div>
-                        </div>
-                    </div>
-                      <div class="col-xl-2 col-md-4 col-sm-6 mb-3 px-2">
-                        <div class="card stat-card dashboard-card">
-                            <div class="card-body">
-                                <h6 class="card-subtitle mb-2 text-muted">Today's Revenue</h6>
-                                <h3 class="card-title text-primary">₹{{ stats.today.revenue|floatformat:0 }}</h3>
-                                <p class="card-text small">
-                                    {% if stats.revenue_change > 0 %}
-                                        <span class="text-success">+{{ stats.revenue_change }}%</span>
-                                    {% elif stats.revenue_change < 0 %}
-                                        <span class="text-danger">{{ stats.revenue_change }}%</span>
-                                    {% else %}
-                                        <span class="text-muted">{{ stats.revenue_change }}%</span>
-                                    {% endif %}
-                                    from last month
-                                </p>
-                                <i class="fas fa-rupee-sign card-icon text-primary"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
-                        <div class="card stat-card income dashboard-card">
-                            <div class="card-body">
-                                <h6 class="card-subtitle mb-2 text-muted">Extra Income</h6>
-                                <h3 class="card-title text-success">₹{{ extra_income|floatformat:0 }}</h3>
-                                <p class="card-text small">Additional revenue</p>
-                                <i class="fas fa-plus-circle card-icon text-success"></i>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
-                        <div class="card stat-card expense dashboard-card">
-                            <div class="card-body">
-                                <h6 class="card-subtitle mb-2 text-muted">Total Expenses</h6>
-                                <h3 class="card-title text-danger">₹{{ expenses|floatformat:0 }}</h3>
-                                <p class="card-text small">Operational costs</p>
-                                <i class="fas fa-minus-circle card-icon text-danger"></i>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
-                        <div class="card stat-card qr dashboard-card">
-                            <div class="card-body">
-                                <h6 class="card-subtitle mb-2 text-muted">QR Amount</h6>
-                                <h3 class="card-title" style="color: #9b59b6;">₹{{ qr_stats.total_qr_amount|floatformat:0 }}</h3>
-                                <p class="card-text small">{{ qr_stats.qr_bookings_count }} bookings</p>
-                                <i class="fas fa-qrcode card-icon" style="color: #9b59b6;"></i>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
-                        <div class="card stat-card pending dashboard-card">
-                            <div class="card-body">
-                                <h6 class="card-subtitle mb-2 text-muted">Due to OYO</h6>
-                                <h3 class="card-title text-danger">₹{{ qr_stats.due_to_oyo|floatformat:0 }}</h3>
-                                <p class="card-text small">{{ pending_qr }} pending</p>
-                                <i class="fas fa-exclamation-triangle card-icon text-danger"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Additional Stats Row -->
-                <div class="row mb-4 gutter-fix">
-                    <div class="col-xl-3 col-md-6 mb-3">
-                        <div class="card stat-card not-in-qr dashboard-card">
-                            <div class="card-body">
-                                <h6 class="card-subtitle mb-2 text-muted">Not in QR</h6>
-                                <h3 class="card-title text-danger">₹{{ qr_stats.not_in_qr_amount|floatformat:0 }}</h3>
-                                <p class="card-text small">{{ qr_stats.not_in_qr_count }} bookings</p>
-                                <i class="fas fa-times-circle card-icon text-danger"></i>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-xl-3 col-md-6 mb-3">
-                        <div class="card stat-card month dashboard-card">
-                            <div class="card-body">
-                                <h6 class="card-subtitle mb-2 text-muted">Total Bookings</h6>
-                                <h3 class="card-title text-warning">{{ stats.month.total_bookings }}</h3>
-                                <p class="card-text small">Filtered period</p>
-                                <i class="fas fa-bed card-icon text-warning"></i>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-xl-3 col-md-6 mb-3">
-                        <div class="card stat-card dashboard-card">
-                            <div class="card-body">
-                                <h6 class="card-subtitle mb-2 text-muted">OYO Percentage</h6>
-                                <h3 class="card-title text-info">{{ stats.oyo_percentage }}%</h3>
-                                <p class="card-text small">of total bookings</p>
-                                <i class="fas fa-percentage card-icon text-info"></i>
-                            </div>
-                        </div>
-                    </div>
-                  
-                </div>
-                
-                <!-- QR Analysis Section -->
-                <div class="row mb-4 gutter-fix">
-                    <div class="col-lg-6 col-md-12 mb-4">
-                        <div class="card dashboard-card">
-                            <div class="card-header">
-                                <h5 class="mb-0"><i class="fas fa-qrcode text-primary me-2"></i>QR Analysis</h5>
-                            </div>
-                            <div class="card-body qr-analysis-card">
-                                <div class="qr-metric">
-                                    <span class="qr-metric-label">
-                                        <i class="fas fa-receipt text-primary"></i>
-                                        Total OYO Bookings Amount
-                                    </span>
-                                    <span class="qr-metric-value">₹{{ qr_stats.total_booking_amount|floatformat:0 }}</span>
-                                </div>
-                                <div class="qr-metric">
-                                    <span class="qr-metric-label">
-                                        <i class="fas fa-qrcode text-success"></i>
-                                        Total QR Returned
-                                    </span>
-                                    <span class="qr-metric-value">₹{{ qr_stats.total_qr_amount|floatformat:0 }}</span>
-                                </div>
-                                <div class="qr-metric">
-                                    <span class="qr-metric-label">
-                                        <i class="fas fa-exclamation-triangle text-danger"></i>
-                                        Due to OYO
-                                    </span>
-                                    <span class="qr-metric-value text-danger">₹{{ qr_stats.due_to_oyo|floatformat:0 }}</span>
-                                </div>
-                                <div class="qr-metric">
-                                    <span class="qr-metric-label">
-                                        <i class="fas fa-times-circle text-warning"></i>
-                                        Not in QR Amount
-                                    </span>
-                                    <span class="qr-metric-value text-warning">₹{{ qr_stats.not_in_qr_amount|floatformat:0 }}</span>
-                                </div>
-                                <div class="qr-metric">
-                                    <span class="qr-metric-label">
-                                        <i class="fas fa-list-ol text-info"></i>
-                                        Total QR Bookings
-                                    </span>
-                                    <span class="qr-metric-value">{{ qr_stats.qr_bookings_count }}</span>
-                                </div>
-                                <div class="qr-metric">
-                                    <span class="qr-metric-label">
-                                        <i class="fas fa-clock text-secondary"></i>
-                                        Pending QR Settlements
-                                    </span>
-                                    <span class="qr-metric-value">{{ pending_qr }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Quick Actions -->
-                    <div class="col-lg-6 col-md-12 mb-4">
-                        <div class="card dashboard-card">
-                            <div class="card-header">
-                                <h5 class="mb-0"><i class="fas fa-bolt text-warning me-2"></i>Quick Actions</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="d-grid gap-2">
-                                    <a href="{% url 'booking' %}" class="btn btn-gradient mb-2">
-                                        <i class="fas fa-bed me-2"></i>New Booking
-                                    </a>
-                                    <a href="{% url 'extra_income' %}" class="btn btn-outline-success mb-2">
-                                        <i class="fas fa-plus-circle me-2"></i>Add Income
-                                    </a>
-                                    <a href="{% url 'expenses' %}" class="btn btn-outline-danger mb-2">
-                                        <i class="fas fa-minus-circle me-2"></i>Add Expense
-                                    </a>
-                                    <a href="#" class="btn btn-outline-info">
-                                        <i class="fas fa-qrcode me-2"></i>QR Transactions
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Recent Bookings -->
-                <div class="row gutter-fix">
-                    <div class="col-12 mb-4">
-                        <div class="card dashboard-card">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0"><i class="fas fa-list text-info me-2"></i>Recent Bookings</h5>
-                                <a href="{% url 'booking' %}" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-plus me-1"></i>Add New Booking
+                                <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                                    <i class="fas fa-sync"></i> Reset
                                 </a>
                             </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-sm">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Guest</th>
-                                                <th>Booking ID</th>
-                                                <th>Mode</th>
-                                                <th>Amount</th>
-                                                <th>Payment</th>
-                                                <th>QR Status</th>
-                                                <th>Date</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for booking in recent_bookings %}
-                                            <tr>
-                                                <td>{{ booking.guest_name|title }}</td>
-                                                <td><span class="badge bg-secondary">{{ booking.booking_id }}</span></td>
-                                                <td>
-                                                    <span class="badge 
-                                                        {% if booking.booking_mode == 'OYO' %}bg-success
-                                                        {% elif booking.booking_mode == 'OTA' %}bg-warning
-                                                        {% else %}bg-info{% endif %}">
-                                                        {{ booking.booking_mode }}
-                                                    </span>
-                                                </td>
-                                                <td>₹{{ booking.booking_amount|floatformat:0 }}</td>
-                                                <td>
-                                                    <span class="badge 
-                                                        {% if booking.payment_mode == 'CASH' %}bg-success
-                                                        {% elif booking.payment_mode == 'UPI' %}bg-primary
-                                                        {% else %}bg-warning{% endif %}">
-                                                        {{ booking.payment_mode }}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    {% if booking.booking_mode == 'OYO' %}
-                                                        {% if booking.not_in_qr %}
-                                                            <span class="badge bg-danger">Not in QR</span>
-                                                        {% elif booking.return_qr < booking.booking_amount %}
-                                                            <span class="badge bg-warning">Pending</span>
-                                                        {% else %}
-                                                            <span class="badge bg-success">Settled</span>
-                                                        {% endif %}
-                                                    {% else %}
-                                                        <span class="badge bg-secondary">N/A</span>
-                                                    {% endif %}
-                                                </td>
-                                                <td class="small">{{ booking.created_at|date:"M d, H:i" }}</td>
-                                            </tr>
-                                            {% empty %}
-                                            <tr>
-                                                <td colspan="7" class="text-center py-3 text-muted">
-                                                    No recent bookings found
-                                                </td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="alert alert-info small mb-0">
+                                <i class="fas fa-info-circle"></i>
+                                Showing data from {{ start_date|date:"M d, Y" }} to {{ end_date|date:"M d, Y" }}
                             </div>
                         </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="row mb-4 gutter-fix">
+        <div class="col-12">
+            <h4 class="mb-3"><i class="fas fa-chart-bar text-primary"></i> Dashboard Overview</h4>
+        </div>
+        
+        <!-- Today's Stats -->
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card stat-card today dashboard-card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Today's Bookings</h6>
+                    <h3 class="card-title text-success">{{ stats.today.bookings }}</h3>
+                    <p class="card-text small">₹{{ stats.today.revenue|floatformat:0 }}</p>
+                    <i class="fas fa-calendar-day card-icon text-success"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3 px-2">
+            <div class="card stat-card dashboard-card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Today's Revenue</h6>
+                    <h3 class="card-title text-primary">₹{{ stats.today.revenue|floatformat:0 }}</h3>
+                    <p class="card-text small">
+                        {% if stats.revenue_change > 0 %}
+                            <span class="text-success">+{{ stats.revenue_change }}%</span>
+                        {% elif stats.revenue_change < 0 %}
+                            <span class="text-danger">{{ stats.revenue_change }}%</span>
+                        {% else %}
+                            <span class="text-muted">{{ stats.revenue_change }}%</span>
+                        {% endif %}
+                        from last month
+                    </p>
+                    <i class="fas fa-rupee-sign card-icon text-primary"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card stat-card income dashboard-card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Extra Income</h6>
+                    <h3 class="card-title text-success">₹{{ extra_income|floatformat:0 }}</h3>
+                    <p class="card-text small">Additional revenue</p>
+                    <i class="fas fa-plus-circle card-icon text-success"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card stat-card expense dashboard-card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Total Expenses</h6>
+                    <h3 class="card-title text-danger">₹{{ expenses|floatformat:0 }}</h3>
+                    <p class="card-text small">Operational costs</p>
+                    <i class="fas fa-minus-circle card-icon text-danger"></i>
+                </div>
+            </div>
+        </div>
+        
+<div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+    <div class="card stat-card qr dashboard-card">
+        <div class="card-body">
+            <h6 class="card-subtitle mb-2 text-muted">QR Amount</h6>
+            <h3 class="card-title" style="color: #9b59b6;">₹{{ qr_stats.total_qr_amount|floatformat:0 }}</h3>
+            <p class="card-text small">{{ qr_stats.qr_bookings_count }} bookings</p>
+            <i class="fas fa-qrcode card-icon" style="color: #9b59b6;"></i>
+        </div>
+    </div>
+</div>
+        
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card stat-card pending dashboard-card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">
+                        {% if qr_stats.due_to_oyo < 0 %}
+                            OYO Owes You
+                        {% else %}
+                            Due to OYO
+                        {% endif %}
+                    </h6>
+                    <h3 class="card-title {% if qr_stats.due_to_oyo < 0 %}text-success{% else %}text-danger{% endif %}">
+                        ₹{{ qr_stats.due_to_oyo|floatformat:0|cut:"-" }}
+                    </h3>
+                    <p class="card-text small">{{ pending_qr }} pending</p>
+                    <i class="fas fa-exclamation-triangle card-icon {% if qr_stats.due_to_oyo < 0 %}text-success{% else %}text-danger{% endif %}"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Additional Stats Row -->
+    <div class="row mb-4 gutter-fix">
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card stat-card not-in-qr dashboard-card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Not in QR</h6>
+                    <h3 class="card-title text-danger">₹{{ qr_stats.not_in_qr_amount|floatformat:0 }}</h3>
+                    <p class="card-text small">{{ qr_stats.not_in_qr_count }} bookings</p>
+                    <i class="fas fa-times-circle card-icon text-danger"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-3">
+    <div class="card stat-card month dashboard-card">
+        <div class="card-body">
+            <h6 class="card-subtitle mb-2 text-muted">Total Rooms Used</h6>
+            <h3 class="card-title text-info">{{ stats.month.total_rooms_used }}</h3>
+            <p class="card-text small">Filtered period</p>
+            <i class="fas fa-door-open card-icon text-info"></i>
+        </div>
+    </div>
+</div>
+        
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card stat-card month dashboard-card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Total Bookings</h6>
+                    <h3 class="card-title text-warning">{{ stats.month.total_bookings }}</h3>
+                    <p class="card-text small">Filtered period</p>
+                    <i class="fas fa-bed card-icon text-warning"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card stat-card dashboard-card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">OYO Percentage</h6>
+                    <h3 class="card-title text-info">{{ stats.oyo_percentage }}%</h3>
+                    <p class="card-text small">of total bookings</p>
+                    <i class="fas fa-percentage card-icon text-info"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card stat-card dashboard-card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">QR Efficiency</h6>
+                    <h3 class="card-title text-success">
+                        {% if qr_stats.qr_bookings_count > 0 %}
+                            {{ qr_stats.qr_efficiency_percentage }}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </h3>
+                    <p class="card-text small">QR bookings ratio</p>
+                    <i class="fas fa-chart-line card-icon text-success"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- QR Analysis Section -->
+    <div class="row mb-4 gutter-fix">
+        <div class="col-lg-6 col-md-12 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-qrcode text-primary me-2"></i>QR Analysis</h5>
+                </div>
+                <div class="card-body qr-analysis-card">
+                    <div class="qr-metric">
+                        <span class="qr-metric-label">
+                            <i class="fas fa-receipt text-primary"></i>
+                            Total OYO Bookings Amount
+                        </span>
+                        <span class="qr-metric-value">₹{{ qr_stats.total_booking_amount|floatformat:0 }}</span>
+                    </div>
+                    <div class="qr-metric">
+                        <span class="qr-metric-label">
+                            <i class="fas fa-qrcode text-success"></i>
+                            Total QR Returned
+                        </span>
+                        <span class="qr-metric-value">₹{{ qr_stats.total_qr_amount|floatformat:0 }}</span>
+                    </div>
+                    <div class="qr-metric">
+                        <span class="qr-metric-label">
+                            <i class="fas fa-exclamation-triangle {% if qr_stats.due_to_oyo < 0 %}text-success{% else %}text-danger{% endif %}"></i>
+                            {% if qr_stats.due_to_oyo < 0 %}
+                                OYO Owes You
+                            {% else %}
+                                Due to OYO
+                            {% endif %}
+                        </span>
+                        <span class="qr-metric-value {% if qr_stats.due_to_oyo < 0 %}text-success{% else %}text-danger{% endif %}">
+                            ₹{{ qr_stats.due_to_oyo|floatformat:0|cut:"-" }}
+                        </span>
+                    </div>
+                    <div class="qr-metric">
+                        <span class="qr-metric-label">
+                            <i class="fas fa-times-circle text-warning"></i>
+                            Not in QR Amount
+                        </span>
+                        <span class="qr-metric-value text-warning">₹{{ qr_stats.not_in_qr_amount|floatformat:0 }}</span>
+                    </div>
+                    <div class="qr-metric">
+                        <span class="qr-metric-label">
+                            <i class="fas fa-list-ol text-info"></i>
+                            Total QR Bookings
+                        </span>
+                        <span class="qr-metric-value">{{ qr_stats.qr_bookings_count }}</span>
+                    </div>
+                    <div class="qr-metric">
+                        <span class="qr-metric-label">
+                            <i class="fas fa-clock text-secondary"></i>
+                            Pending QR Settlements
+                        </span>
+                        <span class="qr-metric-value">{{ pending_qr }}</span>
+                    </div>
+                    <div class="qr-metric">
+                        <span class="qr-metric-label">
+                            <i class="fas fa-chart-pie text-success"></i>
+                            QR Efficiency
+                        </span>
+                        <span class="qr-metric-value text-success">
+                            {% if qr_stats.qr_bookings_count > 0 %}
+                                {{ qr_stats.qr_efficiency_percentage }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </span>
                     </div>
                 </div>
             </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="col-lg-6 col-md-12 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt text-warning me-2"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'booking' %}" class="btn btn-gradient mb-2">
+                            <i class="fas fa-bed me-2"></i>New Booking
+                        </a>
+                        <a href="{% url 'extra_income' %}" class="btn btn-outline-success mb-2">
+                            <i class="fas fa-plus-circle me-2"></i>Add Income
+                        </a>
+                        <a href="{% url 'expenses' %}" class="btn btn-outline-danger mb-2">
+                            <i class="fas fa-minus-circle me-2"></i>Add Expense
+                        </a>
+                        <a href="#" class="btn btn-outline-info">
+                            <i class="fas fa-qrcode me-2"></i>QR Transactions
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Bookings -->
+    <div class="row gutter-fix">
+        <div class="col-12 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-list text-info me-2"></i>Recent Bookings</h5>
+                    <a href="{% url 'booking' %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-plus me-1"></i>Add New Booking
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Guest</th>
+                                    <th>Booking ID</th>
+                                    <th>Mode</th>
+                                    <th>Amount</th>
+                                    <th>Payment</th>
+                                    <th>QR Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in recent_bookings %}
+                                <tr>
+                                    <td>{{ booking.guest_name|title }}</td>
+                                    <td><span class="badge bg-secondary">{{ booking.booking_id }}</span></td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if booking.booking_mode == 'OYO' %}bg-success
+                                            {% elif booking.booking_mode == 'OTA' %}bg-warning
+                                            {% else %}bg-info{% endif %}">
+                                            {{ booking.booking_mode }}
+                                        </span>
+                                    </td>
+                                    <td>₹{{ booking.booking_amount|floatformat:0 }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if booking.payment_mode == 'CASH' %}bg-success
+                                            {% elif booking.payment_mode == 'UPI' %}bg-primary
+                                            {% else %}bg-warning{% endif %}">
+                                            {{ booking.payment_mode }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if booking.booking_mode == 'OYO' %}
+                                            {% if booking.not_in_qr %}
+                                                <span class="badge bg-danger">Not in QR</span>
+                                            {% elif booking.return_qr < booking.booking_amount %}
+                                                <span class="badge bg-warning">Pending</span>
+                                            {% else %}
+                                                <span class="badge bg-success">Settled</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-secondary">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="small">{{ booking.created_at|date:"M d, H:i" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-3 text-muted">
+                                        No recent bookings found
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
         </div>
     </div>
 
