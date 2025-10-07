@@ -4,16 +4,17 @@ from .models import *
 class BookingForm(forms.ModelForm):
     class Meta:
         model = Booking
-        fields = ['booking_id', 'guest_name', 'booking_mode', 'payment_mode', 
-                 'number_of_rooms', 'booking_amount', 'return_qr', 'not_in_qr']
+        fields = ['booking_id', 'guest_name', 'booking_date', 'booking_mode', 'payment_mode', 
+                  'number_of_rooms', 'booking_amount', 'return_qr', 'not_in_qr']
         widgets = {
-            'booking_id': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
-            'guest_name': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
-            'booking_mode': forms.Select(attrs={'class': 'form-control', 'required': True}),
-            'payment_mode': forms.Select(attrs={'class': 'form-control', 'required': True}),
-            'number_of_rooms': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'required': True}),
-            'booking_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0.01', 'required': True}),
-            'return_qr': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0.00', 'required': True}),
+            'booking_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'booking_id': forms.TextInput(attrs={'class': 'form-control'}),
+            'guest_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'booking_mode': forms.Select(attrs={'class': 'form-control'}),
+            'payment_mode': forms.Select(attrs={'class': 'form-control'}),
+            'number_of_rooms': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
+            'booking_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'return_qr': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'not_in_qr': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 class ExtraIncomeForm(forms.ModelForm):

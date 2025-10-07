@@ -90,7 +90,7 @@ def dashboard(request):
     # Calculate today's stats (always current day, not filtered)
     today_bookings = Booking.objects.filter(
         hotel=hotel, 
-        created_at__date=today
+        booking_date=today
     )
     
     # Today's extra income
@@ -112,8 +112,8 @@ def dashboard(request):
     # Calculate filtered stats based on date range
     filtered_bookings = Booking.objects.filter(
         hotel=hotel, 
-        created_at__date__gte=start_date,
-        created_at__date__lte=end_date
+        booking_date__gte=start_date,
+        booking_date__lte=end_date
     )
     
     # QR Analysis for ALL booking modes (OYO, TA, OTA, WALK_IN) - all part of OYO ecosystem
@@ -125,8 +125,8 @@ def dashboard(request):
         booking_mode__in=oyo_ecosystem_modes,
         not_in_qr=False  # Only include bookings that are in QR
     ).filter(
-        created_at__date__gte=start_date,
-        created_at__date__lte=end_date
+        booking_date__gte=start_date,
+        booking_date__lte=end_date
     )
     
     # Separate prepaid and non-prepaid bookings for QR calculation
@@ -157,8 +157,8 @@ def dashboard(request):
         booking_mode__in=oyo_ecosystem_modes,
         not_in_qr=True
     ).filter(
-        created_at__date__gte=start_date,
-        created_at__date__lte=end_date
+        booking_date__gte=start_date,
+        booking_date__lte=end_date
     )
     
     # Get hotel's QR amount (from Hotel model)
@@ -237,8 +237,8 @@ def dashboard(request):
     
     previous_period_bookings = Booking.objects.filter(
         hotel=hotel,
-        created_at__date__gte=previous_period_start,
-        created_at__date__lte=previous_period_end
+        booking_date__gte=previous_period_start,
+        booking_date__lte=previous_period_end
     )
     
     previous_revenue = previous_period_bookings.aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00')
@@ -306,7 +306,7 @@ def dashboard(request):
             'total_qr_amount': total_qr_booking_amount,  # Total booking amount for NON-PREPAID OYO ecosystem QR bookings only
             'total_qr_returned': adjusted_qr_returned,   # Actual QR returned amount
             'total_booking_amount': non_prepaid_qr_bookings.aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00'),
-            'due_to_oyo': due_to_oyo,  # Adjusted due to OYO (includes prepaid due, can be negative when OYO owes you)
+            'due_to_oyo': due_to_oyo,  # Adjusted due to OYO (includes prepaid due, can be negative when OYO owes you money)
             'amount_oyo_owes': excess_amount,  # Positive amount when due_to_oyo is negative
             'qr_bookings_count': non_prepaid_qr_bookings.count(),  # Only non-prepaid bookings in QR count
             'not_in_qr_amount': not_in_qr_total_booking,
@@ -332,6 +332,7 @@ def dashboard(request):
     }
     
     return render(request, 'dashboard.html', context)
+
 def calculate_revenue_change(hotel, current_month_start):
     """Calculate revenue change compared to previous month"""
     previous_month_end = current_month_start - timedelta(days=1)
@@ -340,14 +341,14 @@ def calculate_revenue_change(hotel, current_month_start):
     # Get current month revenue
     current_revenue = Booking.objects.filter(
         hotel=hotel,
-        created_at__date__gte=current_month_start
+        booking_date__gte=current_month_start
     ).aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00')
     
     # Get previous month revenue
     previous_revenue = Booking.objects.filter(
         hotel=hotel,
-        created_at__date__gte=previous_month_start,
-        created_at__date__lte=previous_month_end
+        booking_date__gte=previous_month_start,
+        booking_date__lte=previous_month_end
     ).aggregate(total=Sum('booking_amount'))['total'] or Decimal('0.00')
     
     if previous_revenue > 0:
@@ -401,26 +402,26 @@ def booking(request):
             models.Q(guest_name__icontains=search_query)
         )
     
-    # Apply date filters
+    # Apply date filters - UPDATED: Use booking_date for date filtering
     if date_filter:
         today = timezone.now().date()
         if date_filter == 'today':
-            bookings = bookings.filter(created_at__date=today)
+            bookings = bookings.filter(booking_date=today)
         elif date_filter == 'yesterday':
             yesterday = today - timedelta(days=1)
-            bookings = bookings.filter(created_at__date=yesterday)
+            bookings = bookings.filter(booking_date=yesterday)
         elif date_filter == 'this_week':
             start_of_week = today - timedelta(days=today.weekday())
-            bookings = bookings.filter(created_at__date__gte=start_of_week)
+            bookings = bookings.filter(booking_date__gte=start_of_week)
         elif date_filter == 'this_month':
-            bookings = bookings.filter(created_at__year=today.year, created_at__month=today.month)
+            bookings = bookings.filter(booking_date__year=today.year, booking_date__month=today.month)
         elif date_filter == 'last_month':
             first_day_of_current_month = today.replace(day=1)
             last_day_of_previous_month = first_day_of_current_month - timedelta(days=1)
             first_day_of_previous_month = last_day_of_previous_month.replace(day=1)
             bookings = bookings.filter(
-                created_at__date__gte=first_day_of_previous_month,
-                created_at__date__lte=last_day_of_previous_month
+                booking_date__gte=first_day_of_previous_month,
+                booking_date__lte=last_day_of_previous_month
             )
     
     # Apply custom date range filter
@@ -428,7 +429,7 @@ def booking(request):
         try:
             start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
             end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
-            bookings = bookings.filter(created_at__date__range=[start_date_obj, end_date_obj])
+            bookings = bookings.filter(booking_date__range=[start_date_obj, end_date_obj])
         except ValueError:
             messages.error(request, "Invalid date format. Please use YYYY-MM-DD.")
     
@@ -438,8 +439,8 @@ def booking(request):
     total_due = sum(booking.due_to_oyo for booking in bookings)
     total_qr_return = sum(booking.return_qr for booking in bookings)
     
-    # Order and paginate
-    bookings = bookings.order_by('-created_at')
+    # Order by booking_date (descending) and created_at (descending)
+    bookings = bookings.order_by('-booking_date', '-created_at')
     
     # Pagination - 20 bookings per page
     paginator = Paginator(bookings, 20)
@@ -452,6 +453,7 @@ def booking(request):
         booking_data[booking.id] = {
             'booking_id': booking.booking_id,
             'guest_name': booking.guest_name,
+            'booking_date': booking.booking_date.strftime('%Y-%m-%d'),  # NEW
             'booking_mode': booking.booking_mode,
             'payment_mode': booking.payment_mode,
             'number_of_rooms': booking.number_of_rooms,
@@ -480,53 +482,46 @@ def booking(request):
     return render(request, "bookings.html", context)
 
 @login_required
-@require_POST
 def update_booking(request):
-    try:
-        hotel = Hotel.objects.get(user=request.user)
-        
-        # Get the numeric ID from the form
-        booking_id = request.POST.get('id')
-        if not booking_id:
-            messages.error(request, "Booking ID is required.")
-            return redirect('booking')
+    if request.method == 'POST':
+        try:
+            booking_id = request.POST.get('id')
+            booking = Booking.objects.get(id=booking_id, hotel__user=request.user)
             
-        booking_instance = get_object_or_404(Booking, id=booking_id, hotel=hotel)
-        
-        # Create form with instance and POST data
-        form = BookingForm(request.POST, instance=booking_instance)
-        if form.is_valid():
-            booking = form.save(commit=False)
-            booking.hotel = hotel  # Ensure hotel is set
+            # Update booking fields
+            booking.booking_id = request.POST.get('booking_id')
+            booking.guest_name = request.POST.get('guest_name')
+            
+            # Parse and update booking date
+            booking_date_str = request.POST.get('booking_date')
+            if booking_date_str:
+                booking.booking_date = datetime.strptime(booking_date_str, '%Y-%m-%d').date()
+            
+            booking.booking_mode = request.POST.get('booking_mode')
+            booking.payment_mode = request.POST.get('payment_mode')
+            booking.number_of_rooms = int(request.POST.get('number_of_rooms', 1))
+            booking.booking_amount = Decimal(request.POST.get('booking_amount'))
+            booking.return_qr = Decimal(request.POST.get('return_qr'))
+            booking.not_in_qr = request.POST.get('not_in_qr') == 'on'
             
             # Auto-calculate return_qr if not_in_qr is not checked
             if not booking.not_in_qr:
                 # Calculate due: number_of_rooms * hotel_qr_amount
-                calculated_due = booking.number_of_rooms * hotel.qr_amount
+                calculated_due = booking.number_of_rooms * booking.hotel.qr_amount
                 actual_due = min(calculated_due, booking.booking_amount)
                 # Calculate QR return: booking amount - due amount
                 booking.return_qr = max(Decimal('0.00'), booking.booking_amount - actual_due)
+            else:
+                booking.return_qr = Decimal('0.00')
             
             booking.save()
             messages.success(request, f'Booking {booking.booking_id} updated successfully!')
-            return redirect('booking')
-        else:
-            # Log form errors for debugging
-            print("Form errors:", form.errors)
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{field}: {error}")
-            return redirect('booking')
-            
-    except Hotel.DoesNotExist:
-        messages.error(request, "You don't have a hotel associated with your account.")
-        return redirect('booking')
-    except ValueError as e:
-        messages.error(request, f"Invalid booking ID: {str(e)}")
-        return redirect('booking')
-    except Exception as e:
-        messages.error(request, f"An error occurred while updating the booking: {str(e)}")
-        return redirect('booking')
+        except Booking.DoesNotExist:
+            messages.error(request, 'Booking not found.')
+        except Exception as e:
+            messages.error(request, f'Error updating booking: {str(e)}')
+    
+    return redirect('booking')
 
 @login_required
 def delete_booking(request, booking_id):
