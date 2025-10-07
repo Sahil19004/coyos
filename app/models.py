@@ -46,6 +46,7 @@ class Booking(models.Model):
     booking_amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     return_qr = models.DecimalField(max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(Decimal('0.00'))])
     created_at = models.DateTimeField(auto_now_add=True)
+    booking_date = models.DateField(null=True,blank=True) 
     extra_income = models.CharField(max_length=10, null=True, blank=True)
     not_in_qr = models.BooleanField(default=False)
     
