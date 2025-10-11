@@ -93,16 +93,16 @@ def dashboard(request):
         booking_date=today
     )
     
-    # Today's extra income
+    # Today's extra income - CHANGED to use date field
     today_extra_income = ExtraIncome.objects.filter(
         hotel=hotel,
-        created_at__date=today
+        date=today
     ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
     
-    # Today's expenses
+    # Today's expenses - CHANGED to use date field
     today_expenses = DailyExpense.objects.filter(
         hotel=hotel,
-        created_at__date=today
+        date=today
     ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
     
     # Calculate today's revenue (bookings + extra income - expenses)
@@ -184,18 +184,18 @@ def dashboard(request):
     # Track if there's excess (negative due means OYO owes you money)
     excess_amount = abs(due_to_oyo) if due_to_oyo < 0 else Decimal('0.00')
     
-    # Extra income for filtered period
+    # Extra income for filtered period - CHANGED to use date field
     extra_income = ExtraIncome.objects.filter(
         hotel=hotel,
-        created_at__date__gte=start_date,
-        created_at__date__lte=end_date
+        date__gte=start_date,
+        date__lte=end_date
     ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
     
-    # Expenses for filtered period
+    # Expenses for filtered period - CHANGED to use date field
     expenses = DailyExpense.objects.filter(
         hotel=hotel,
-        created_at__date__gte=start_date,
-        created_at__date__lte=end_date
+        date__gte=start_date,
+        date__lte=end_date
     ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
     
     # Calculate net profit for filtered period
@@ -563,8 +563,8 @@ def extra_income(request):
     else:
         form = ExtraIncomeForm(hotel=hotel)
     
-    # Get all extra incomes for this hotel
-    incomes = ExtraIncome.objects.filter(hotel=hotel).order_by('-created_at')
+    # Get all extra incomes for this hotel, ordered by date first, then created_at
+    incomes = ExtraIncome.objects.filter(hotel=hotel).order_by('-date', '-created_at')
     
     # Calculate total extra income
     total_income = incomes.aggregate(total=models.Sum('amount'))['total'] or Decimal('0.00')
@@ -601,6 +601,11 @@ def update_extra_income(request):
         income_instance.source = request.POST.get('source')
         income_instance.description = request.POST.get('description')
         
+        # Update date field
+        date_value = request.POST.get('date')
+        if date_value:
+            income_instance.date = date_value
+        
         # Update booking if provided
         booking_id = request.POST.get('booking')
         if booking_id:
@@ -625,7 +630,7 @@ def update_extra_income(request):
         messages.error(request, "You don't have permission to edit this income.")
         return redirect('extra_income')
     except ValueError as e:
-        messages.error(request, "Invalid amount format.")
+        messages.error(request, "Invalid amount or date format.")
         return redirect('extra_income')
     except Exception as e:
         messages.error(request, f"An error occurred: {str(e)}")
@@ -698,9 +703,6 @@ def update_all_bookings_extra_income(hotel):
         
     except Exception as e:
         print(f"Error updating all bookings extra income: {e}")
-
-
-
 @login_required
 def expenses(request):
     try:
@@ -723,8 +725,8 @@ def expenses(request):
     else:
         form = DailyExpenseForm()
     
-    # Get all expenses for this hotel
-    expenses = DailyExpense.objects.filter(hotel=hotel).order_by('-created_at')
+    # Get all expenses for this hotel, ordered by date first, then created_at
+    expenses = DailyExpense.objects.filter(hotel=hotel).order_by('-date', '-created_at')
     
     # Calculate total expenses by category
     expense_categories = {
@@ -767,6 +769,11 @@ def update_expense(request):
         expense_instance.expense_type = request.POST.get('expense_type')
         expense_instance.description = request.POST.get('description')
         
+        # Update date field
+        date_value = request.POST.get('date')
+        if date_value:
+            expense_instance.date = date_value
+        
         expense_instance.save()
         
         messages.success(request, f'Expense updated successfully!')
@@ -776,7 +783,7 @@ def update_expense(request):
         messages.error(request, "You don't have permission to edit this expense.")
         return redirect('expenses')
     except ValueError as e:
-        messages.error(request, "Invalid amount format.")
+        messages.error(request, "Invalid amount or date format.")
         return redirect('expenses')
 
 @login_required
@@ -798,7 +805,7 @@ from django.utils import timezone
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from .models import Hotel, SimpleBooking
-
+@login_required
 def blackroom(request):
     # Get current hotel
     hotel = get_object_or_404(Hotel, id=request.user.hotel.id)
@@ -824,12 +831,12 @@ def blackroom(request):
     if start_date > end_date:
         start_date = end_date
     
-    # Get filtered bookings
+    # Get filtered bookings - UPDATED: Use booking_date instead of created_at
     simple_bookings = SimpleBooking.objects.filter(
         hotel=hotel,
-        created_at__date__gte=start_date,
-        created_at__date__lte=end_date
-    ).order_by('-created_at')
+        booking_date__gte=start_date,
+        booking_date__lte=end_date
+    ).order_by('-booking_date', '-created_at')
     
     # Calculate summary statistics for filtered period
     total_bookings = simple_bookings.count()
@@ -850,8 +857,8 @@ def blackroom(request):
         
         monthly_bookings = SimpleBooking.objects.filter(
             hotel=hotel,
-            created_at__date__gte=month_start,
-            created_at__date__lte=month_end
+            booking_date__gte=month_start,
+            booking_date__lte=month_end
         )
         
         month_revenue = monthly_bookings.aggregate(Sum('booking_amount'))['booking_amount__sum'] or Decimal('0.00')
@@ -882,7 +889,7 @@ def blackroom(request):
         day_date = timezone.now().date().replace(day=i)
         day_bookings = SimpleBooking.objects.filter(
             hotel=hotel,
-            created_at__date=day_date
+            booking_date=day_date
         )
         day_revenue = day_bookings.aggregate(Sum('booking_amount'))['booking_amount__sum'] or Decimal('0.00')
         day_extra_income = day_bookings.aggregate(Sum('extra_income'))['extra_income__sum'] or Decimal('0.00')
@@ -891,6 +898,7 @@ def blackroom(request):
     if request.method == 'POST':
         # Handle form submission for new booking
         guest_name = request.POST.get('guest_name')
+        booking_date = request.POST.get('booking_date')  # NEW: Get booking date
         booking_amount = request.POST.get('booking_amount')
         extra_income = request.POST.get('extra_income', '0.00')
         
@@ -899,6 +907,7 @@ def blackroom(request):
             booking = SimpleBooking(
                 hotel=hotel,
                 guest_name=guest_name,
+                booking_date=datetime.strptime(booking_date, '%Y-%m-%d').date(),  # NEW: Parse booking date
                 booking_amount=Decimal(booking_amount),
                 extra_income=Decimal(extra_income)
             )
@@ -923,12 +932,14 @@ def blackroom(request):
     }
     return render(request, 'simplebook.html', context)
 
+
 def edit_simple_booking(request, booking_id):
     booking = get_object_or_404(SimpleBooking, id=booking_id)
     
     if request.method == 'POST':
         # Handle form submission for editing
         booking.guest_name = request.POST.get('guest_name')
+        booking.booking_date = datetime.strptime(request.POST.get('booking_date'), '%Y-%m-%d').date()  # NEW: Update booking date
         booking.booking_amount = request.POST.get('booking_amount')
         booking.extra_income = request.POST.get('extra_income', '0.00')
         
@@ -938,6 +949,7 @@ def edit_simple_booking(request, booking_id):
             return redirect('blackroom')
         except Exception as e:
             messages.error(request, f'Error updating booking: {str(e)}')
+            return redirect('blackroom')
     
     return redirect('blackroom')
 

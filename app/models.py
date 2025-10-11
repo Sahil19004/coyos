@@ -81,6 +81,7 @@ class ExtraIncome(models.Model):
     hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE,null=True,blank=True)
     booking=models.ForeignKey(Booking,on_delete=models.CASCADE,null=True,blank=True)
     source = models.CharField(max_length=20, choices=INCOME_SOURCE_CHOICES)
+    date = models.DateField(default=timezone.now)
     amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     description = models.CharField(max_length=200, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -105,6 +106,7 @@ class DailyExpense(models.Model):
     hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='expenses')
     expense_type = models.CharField(max_length=20, choices=EXPENSE_TYPE_CHOICES)
     amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
+    date = models.DateField(default=timezone.now)  # Add this line
     description = models.CharField(max_length=200, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -155,6 +157,7 @@ class SimpleBooking(models.Model):
     hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, null=True, blank=True)
     guest_name = models.CharField(max_length=200)
     booking_amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
+    booking_date = models.DateField(default=timezone.now)  # NEW FIELD
     extra_income = models.CharField(max_length=10, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     

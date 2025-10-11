@@ -18,6 +18,15 @@ class BookingForm(forms.ModelForm):
             'not_in_qr': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 class ExtraIncomeForm(forms.ModelForm):
+    date = forms.DateField(
+        widget=forms.DateInput(attrs={
+            'type': 'date', 
+            'class': 'form-control'
+        }),
+        initial=timezone.now,
+        label='Date'
+    )
+    
     def __init__(self, *args, **kwargs):
         self.hotel = kwargs.pop('hotel', None)
         super().__init__(*args, **kwargs)
@@ -28,7 +37,7 @@ class ExtraIncomeForm(forms.ModelForm):
     
     class Meta:
         model = ExtraIncome
-        fields = ['booking', 'source', 'amount', 'description']
+        fields = ['booking', 'source', 'amount', 'date', 'description']
         widgets = {
             'booking': forms.Select(attrs={'class': 'form-control'}),
             'source': forms.Select(attrs={'class': 'form-control'}),
@@ -39,22 +48,39 @@ class ExtraIncomeForm(forms.ModelForm):
             'booking': 'Associated Booking (Optional)',
             'source': 'Income Source',
             'amount': 'Amount (₹)',
+            'date': 'Date',
             'description': 'Description',
         }
 
 
 
 class DailyExpenseForm(forms.ModelForm):
+    date = forms.DateField(
+        widget=forms.DateInput(attrs={
+            'type': 'date', 
+            'class': 'form-control'
+        }),
+        initial=timezone.now,
+        label='Date'
+    )
+    
     class Meta:
         model = DailyExpense
-        fields = ['expense_type', 'amount', 'description']
+        fields = ['expense_type', 'amount', 'date', 'description']
         widgets = {
             'expense_type': forms.Select(attrs={'class': 'form-control'}),
             'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0.01'}),
             'description': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter expense description'}),
         }
+        labels = {
+            'expense_type': 'Expense Type',
+            'amount': 'Amount (₹)',
+            'date': 'Date',
+            'description': 'Description',
+        }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
-            field.widget.attrs['class'] = 'form-control'
+            if 'class' not in field.widget.attrs:
+                field.widget.attrs['class'] = 'form-control'
