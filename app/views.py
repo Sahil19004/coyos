@@ -861,9 +861,12 @@ def blackroom(request):
                 booking_date__lte=month_end
             )
             
-            month_revenue = monthly_bookings.aggregate(Sum('booking_amount'))['booking_amount__sum'] or Decimal('0.00')
-            month_extra_income = monthly_bookings.aggregate(Sum('extra_income'))['extra_income__sum'] or Decimal('0.00')
-            # FIX: Do Decimal arithmetic first, then convert to float
+            month_revenue = monthly_bookings.aggregate(Sum('booking_amount'))['booking_amount__sum']
+            month_extra_income = monthly_bookings.aggregate(Sum('extra_income'))['extra_income__sum']
+            
+            # Ensure values are Decimal type
+            month_revenue = Decimal(str(month_revenue)) if month_revenue is not None else Decimal('0.00')
+            month_extra_income = Decimal(str(month_extra_income)) if month_extra_income is not None else Decimal('0.00')
             month_total = month_revenue + month_extra_income
             
             monthly_data.append({
@@ -892,9 +895,12 @@ def blackroom(request):
                 hotel=hotel,
                 booking_date=day_date
             )
-            day_revenue = day_bookings.aggregate(Sum('booking_amount'))['booking_amount__sum'] or Decimal('0.00')
-            day_extra_income = day_bookings.aggregate(Sum('extra_income'))['extra_income__sum'] or Decimal('0.00')
-            # FIX: Do Decimal arithmetic first, then convert to float
+            day_revenue = day_bookings.aggregate(Sum('booking_amount'))['booking_amount__sum']
+            day_extra_income = day_bookings.aggregate(Sum('extra_income'))['extra_income__sum']
+            
+            # Ensure values are Decimal type
+            day_revenue = Decimal(str(day_revenue)) if day_revenue is not None else Decimal('0.00')
+            day_extra_income = Decimal(str(day_extra_income)) if day_extra_income is not None else Decimal('0.00')
             daily_data.append(float(day_revenue + day_extra_income))
         
         if request.method == 'POST':
@@ -934,7 +940,6 @@ def blackroom(request):
         }
         return render(request, 'simplebook.html', context)
     return render(request,'login.html')
-
 def edit_simple_booking(request, booking_id):
     booking = get_object_or_404(SimpleBooking, id=booking_id)
     
