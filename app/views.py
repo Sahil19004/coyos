@@ -805,133 +805,134 @@ from django.utils import timezone
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from .models import Hotel, SimpleBooking
-@login_required
-def blackroom(request):
-    # Get current hotel
-    hotel = get_object_or_404(Hotel, id=request.user.hotel.id)
-    
-    # Handle date filters
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
-    
-    # Set default date range (current month if no dates provided)
-    if not start_date:
-        today = timezone.now().date()
-        month_start = today.replace(day=1)
-        start_date = month_start
-    else:
-        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-    
-    if not end_date:
-        end_date = timezone.now().date()
-    else:
-        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
-    
-    # Ensure start_date is not after end_date
-    if start_date > end_date:
-        start_date = end_date
-    
-    # Get filtered bookings - UPDATED: Use booking_date instead of created_at
-    simple_bookings = SimpleBooking.objects.filter(
-        hotel=hotel,
-        booking_date__gte=start_date,
-        booking_date__lte=end_date
-    ).order_by('-booking_date', '-created_at')
-    
-    # Calculate summary statistics for filtered period
-    total_bookings = simple_bookings.count()
-    total_amount = simple_bookings.aggregate(Sum('booking_amount'))['booking_amount__sum'] or Decimal('0.00')
-    total_extra_income = simple_bookings.aggregate(Sum('extra_income'))['extra_income__sum'] or Decimal('0.00')
-    
-    # Calculate monthly data for charts
-    monthly_data = []
-    current_date = start_date.replace(day=1)
-    
-    while current_date <= end_date:
-        month_start = current_date.replace(day=1)
-        next_month = month_start.replace(day=28) + timedelta(days=4)
-        month_end = next_month - timedelta(days=next_month.day)
-        
-        if month_end > end_date:
-            month_end = end_date
-        
-        monthly_bookings = SimpleBooking.objects.filter(
-            hotel=hotel,
-            booking_date__gte=month_start,
-            booking_date__lte=month_end
-        )
-        
-        month_revenue = monthly_bookings.aggregate(Sum('booking_amount'))['booking_amount__sum'] or Decimal('0.00')
-        month_extra_income = monthly_bookings.aggregate(Sum('extra_income'))['extra_income__sum'] or Decimal('0.00')
-        month_total = month_revenue + month_extra_income
-        
-        monthly_data.append({
-            'month': month_start.strftime('%b %Y'),
-            'revenue': float(month_revenue),
-            'extra_income': float(month_extra_income),
-            'total': float(month_total),
-            'bookings_count': monthly_bookings.count()
-        })
-        
-        # Move to next month
-        if current_date.month == 12:
-            current_date = current_date.replace(year=current_date.year + 1, month=1)
-        else:
-            current_date = current_date.replace(month=current_date.month + 1)
-    
-    # Daily data for current month
-    daily_data = []
-    current_month_start = timezone.now().date().replace(day=1)
-    next_month = current_month_start.replace(day=28) + timedelta(days=4)
-    current_month_end = next_month - timedelta(days=next_month.day)
-    
-    for i in range(1, min(timezone.now().date().day + 1, 32)):
-        day_date = timezone.now().date().replace(day=i)
-        day_bookings = SimpleBooking.objects.filter(
-            hotel=hotel,
-            booking_date=day_date
-        )
-        day_revenue = day_bookings.aggregate(Sum('booking_amount'))['booking_amount__sum'] or Decimal('0.00')
-        day_extra_income = day_bookings.aggregate(Sum('extra_income'))['extra_income__sum'] or Decimal('0.00')
-        daily_data.append(float(day_revenue + day_extra_income))
-    
-    if request.method == 'POST':
-        # Handle form submission for new booking
-        guest_name = request.POST.get('guest_name')
-        booking_date = request.POST.get('booking_date')  # NEW: Get booking date
-        booking_amount = request.POST.get('booking_amount')
-        extra_income = request.POST.get('extra_income', '0.00')
-        
-        # Validate and create booking
-        try:
-            booking = SimpleBooking(
-                hotel=hotel,
-                guest_name=guest_name,
-                booking_date=datetime.strptime(booking_date, '%Y-%m-%d').date(),  # NEW: Parse booking date
-                booking_amount=Decimal(booking_amount),
-                extra_income=Decimal(extra_income)
-            )
-            booking.save()
-            messages.success(request, 'Booking added successfully!')
-            return redirect('blackroom')
-        except Exception as e:
-            messages.error(request, f'Error creating booking: {str(e)}')
-    
-    context = {
-        'bookings': simple_bookings,
-        'today': timezone.now().date(),
-        'hotel': hotel,
-        'total_bookings': total_bookings,
-        'total_amount': total_amount,
-        'total_extra_income': total_extra_income,
-        'start_date': start_date,
-        'end_date': end_date,
-        'monthly_data': monthly_data,
-        'daily_data': daily_data,
-        'grand_total': total_amount + total_extra_income,
-    }
-    return render(request, 'simplebook.html', context)
 
+def blackroom(request):
+    if request.user.is_authenticated:
+        # Get current hotel
+        hotel = get_object_or_404(Hotel, id=request.user.hotel.id)
+        
+        # Handle date filters
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        
+        # Set default date range (current month if no dates provided)
+        if not start_date:
+            today = timezone.now().date()
+            month_start = today.replace(day=1)
+            start_date = month_start
+        else:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        
+        if not end_date:
+            end_date = timezone.now().date()
+        else:
+            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+        
+        # Ensure start_date is not after end_date
+        if start_date > end_date:
+            start_date = end_date
+        
+        # Get filtered bookings - UPDATED: Use booking_date instead of created_at
+        simple_bookings = SimpleBooking.objects.filter(
+            hotel=hotel,
+            booking_date__gte=start_date,
+            booking_date__lte=end_date
+        ).order_by('-booking_date', '-created_at')
+        
+        # Calculate summary statistics for filtered period
+        total_bookings = simple_bookings.count()
+        total_amount = simple_bookings.aggregate(Sum('booking_amount'))['booking_amount__sum'] or Decimal('0.00')
+        total_extra_income = simple_bookings.aggregate(Sum('extra_income'))['extra_income__sum'] or Decimal('0.00')
+        
+        # Calculate monthly data for charts
+        monthly_data = []
+        current_date = start_date.replace(day=1)
+        
+        while current_date <= end_date:
+            month_start = current_date.replace(day=1)
+            next_month = month_start.replace(day=28) + timedelta(days=4)
+            month_end = next_month - timedelta(days=next_month.day)
+            
+            if month_end > end_date:
+                month_end = end_date
+            
+            monthly_bookings = SimpleBooking.objects.filter(
+                hotel=hotel,
+                booking_date__gte=month_start,
+                booking_date__lte=month_end
+            )
+            
+            month_revenue = monthly_bookings.aggregate(Sum('booking_amount'))['booking_amount__sum'] or Decimal('0.00')
+            month_extra_income = monthly_bookings.aggregate(Sum('extra_income'))['extra_income__sum'] or Decimal('0.00')
+            month_total = month_revenue + month_extra_income
+            
+            monthly_data.append({
+                'month': month_start.strftime('%b %Y'),
+                'revenue': float(month_revenue),
+                'extra_income': float(month_extra_income),
+                'total': float(month_total),
+                'bookings_count': monthly_bookings.count()
+            })
+            
+            # Move to next month
+            if current_date.month == 12:
+                current_date = current_date.replace(year=current_date.year + 1, month=1)
+            else:
+                current_date = current_date.replace(month=current_date.month + 1)
+        
+        # Daily data for current month
+        daily_data = []
+        current_month_start = timezone.now().date().replace(day=1)
+        next_month = current_month_start.replace(day=28) + timedelta(days=4)
+        current_month_end = next_month - timedelta(days=next_month.day)
+        
+        for i in range(1, min(timezone.now().date().day + 1, 32)):
+            day_date = timezone.now().date().replace(day=i)
+            day_bookings = SimpleBooking.objects.filter(
+                hotel=hotel,
+                booking_date=day_date
+            )
+            day_revenue = day_bookings.aggregate(Sum('booking_amount'))['booking_amount__sum'] or Decimal('0.00')
+            day_extra_income = day_bookings.aggregate(Sum('extra_income'))['extra_income__sum'] or Decimal('0.00')
+            daily_data.append(float(day_revenue + day_extra_income))
+        
+        if request.method == 'POST':
+            # Handle form submission for new booking
+            guest_name = request.POST.get('guest_name')
+            booking_date = request.POST.get('booking_date')  # NEW: Get booking date
+            booking_amount = request.POST.get('booking_amount')
+            extra_income = request.POST.get('extra_income', '0.00')
+            
+            # Validate and create booking
+            try:
+                booking = SimpleBooking(
+                    hotel=hotel,
+                    guest_name=guest_name,
+                    booking_date=datetime.strptime(booking_date, '%Y-%m-%d').date(),  # NEW: Parse booking date
+                    booking_amount=Decimal(booking_amount),
+                    extra_income=Decimal(extra_income)
+                )
+                booking.save()
+                messages.success(request, 'Booking added successfully!')
+                return redirect('blackroom')
+            except Exception as e:
+                messages.error(request, f'Error creating booking: {str(e)}')
+        
+        context = {
+            'bookings': simple_bookings,
+            'today': timezone.now().date(),
+            'hotel': hotel,
+            'total_bookings': total_bookings,
+            'total_amount': total_amount,
+            'total_extra_income': total_extra_income,
+            'start_date': start_date,
+            'end_date': end_date,
+            'monthly_data': monthly_data,
+            'daily_data': daily_data,
+            'grand_total': total_amount + total_extra_income,
+        }
+        return render(request, 'simplebook.html', context)
+    return render(request,'login.html')
 
 def edit_simple_booking(request, booking_id):
     booking = get_object_or_404(SimpleBooking, id=booking_id)
