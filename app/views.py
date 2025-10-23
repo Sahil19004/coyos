@@ -805,7 +805,6 @@ from django.utils import timezone
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from .models import Hotel, SimpleBooking
-
 def blackroom(request):
     if request.user.is_authenticated:
         # Get current hotel
@@ -864,13 +863,14 @@ def blackroom(request):
             
             month_revenue = monthly_bookings.aggregate(Sum('booking_amount'))['booking_amount__sum'] or Decimal('0.00')
             month_extra_income = monthly_bookings.aggregate(Sum('extra_income'))['extra_income__sum'] or Decimal('0.00')
+            # FIX: Do Decimal arithmetic first, then convert to float
             month_total = month_revenue + month_extra_income
             
             monthly_data.append({
                 'month': month_start.strftime('%b %Y'),
                 'revenue': float(month_revenue),
                 'extra_income': float(month_extra_income),
-                'total': float(month_total),
+                'total': float(month_total),  # Now converting Decimal to float
                 'bookings_count': monthly_bookings.count()
             })
             
@@ -894,6 +894,7 @@ def blackroom(request):
             )
             day_revenue = day_bookings.aggregate(Sum('booking_amount'))['booking_amount__sum'] or Decimal('0.00')
             day_extra_income = day_bookings.aggregate(Sum('extra_income'))['extra_income__sum'] or Decimal('0.00')
+            # FIX: Do Decimal arithmetic first, then convert to float
             daily_data.append(float(day_revenue + day_extra_income))
         
         if request.method == 'POST':
