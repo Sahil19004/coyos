@@ -840,8 +840,12 @@ def blackroom(request):
         
         # Calculate summary statistics for filtered period
         total_bookings = simple_bookings.count()
-        total_amount = simple_bookings.aggregate(Sum('booking_amount'))['booking_amount__sum'] or Decimal('0.00')
-        total_extra_income = simple_bookings.aggregate(Sum('extra_income'))['extra_income__sum'] or Decimal('0.00')
+        total_amount = simple_bookings.aggregate(Sum('booking_amount'))['booking_amount__sum']
+        total_extra_income = simple_bookings.aggregate(Sum('extra_income'))['extra_income__sum']
+        
+        # Ensure values are Decimal type
+        total_amount = Decimal(str(total_amount)) if total_amount is not None else Decimal('0.00')
+        total_extra_income = Decimal(str(total_extra_income)) if total_extra_income is not None else Decimal('0.00')
         
         # Calculate monthly data for charts
         monthly_data = []
